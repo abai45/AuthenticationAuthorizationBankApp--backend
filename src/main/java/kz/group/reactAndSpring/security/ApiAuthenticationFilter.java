@@ -5,8 +5,13 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kz.group.reactAndSpring.domain.Token;
+import kz.group.reactAndSpring.domain.UserPrincipal;
 import kz.group.reactAndSpring.dto.LoginRequestDto;
 import kz.group.reactAndSpring.dto.UserDto;
+import kz.group.reactAndSpring.dto.UserTokenResponseDto;
+import kz.group.reactAndSpring.exception.ApiException;
+import kz.group.reactAndSpring.service.EmailService;
 import kz.group.reactAndSpring.service.JwtService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -15,41 +20,43 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.util.Map;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
 import static kz.group.reactAndSpring.constant.Constants.LOGIN_PATH;
 import static kz.group.reactAndSpring.domain.ApiAuthentication.unauthenticated;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_ATTEMPT;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_SUCCESS;
-import static kz.group.reactAndSpring.enumeration.TokenType.ACCESS;
-import static kz.group.reactAndSpring.enumeration.TokenType.REFRESH;
-import static kz.group.reactAndSpring.utils.RequestUtils.getResponse;
 import static kz.group.reactAndSpring.utils.RequestUtils.handleErrorResponse;
+import static kz.group.reactAndSpring.utils.UserUtils.generateOtpCode;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
-public class AuthenticationFilter extends AbstractAuthenticationProcessingFilter {
+public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
-    private final UserService userService;
     private final JwtService jwtService;
+    private final UserService userService;
+    private final EmailService emailService;
 
-    public AuthenticationFilter(AuthenticationManager authenticationManager, UserService userService, JwtService jwtService) {
-        super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()), authenticationManager);
-        this.userService = userService;
+    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, EmailService emailService) {
+        super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()));
         this.jwtService = jwtService;
+        this.userService = userService;
+        this.emailService = emailService;
+        setAuthenticationManager(authenticationManager);
     }
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException, ServletException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException, IOException {
         try {
-            var user = new ObjectMapper().configure(AUTO_CLOSE_SOURCE, true).readValue(request.getInputStream(), LoginRequestDto.class);
-            userService.updateLoginAttempt(user.getEmail(), LOGIN_ATTEMPT);
-            var authentication = unauthenticated(user.getEmail(), user.getPassword());
+            LoginRequestDto loginRequestDto = new ObjectMapper().configure(AUTO_CLOSE_SOURCE, true)
+                    .readValue(request.getInputStream(), LoginRequestDto.class);
+            userService.updateLoginAttempt(loginRequestDto.getEmail(), LOGIN_ATTEMPT);
+            Authentication authentication = unauthenticated(loginRequestDto.getEmail(), loginRequestDto.getPassword());
             return getAuthenticationManager().authenticate(authentication);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -60,29 +67,38 @@ public class AuthenticationFilter extends AbstractAuthenticationProcessingFilter
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
-        var user = (UserDto) authentication.getPrincipal();
+        UserDto user = (UserDto) authentication.getPrincipal();
         userService.updateLoginAttempt(user.getEmail(), LOGIN_SUCCESS);
-        var httpResponse = user.isMfa() ? sendQrCode(request, user) : sendResponse(request, response, user);
+        if (user.isMfa()) {
+            sendOtpCode(request, response, user); // Если включена двухфакторная аутентификация, отправляем OTP-код
+        } else {
+            sendResponse(request, response, user); // Иначе отправляем токены доступа и обновления
+        }
+    }
+
+    private void sendResponse(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
+        String accessToken = jwtService.createToken(user, Token::getAccess_token);
+        String refreshToken = jwtService.createToken(user, Token::getRefresh_token);
+        UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto();
+        userTokenResponseDto.setAccessToken(accessToken);
+        userTokenResponseDto.setRefreshToken(refreshToken);
+        userTokenResponseDto.setUserDto(user);
+
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
-        var out = response.getOutputStream();
-        var mapper = new ObjectMapper();
-        mapper.writeValue(out, httpResponse);
-        out.flush();
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), userTokenResponseDto);
     }
 
-    private Object sendResponse(HttpServletRequest request, HttpServletResponse response, UserDto user) {
-        jwtService.addCokie(response,user, ACCESS);
-        jwtService.addCokie(response,user, REFRESH);
-        return getResponse(request, Map.of("user",user), "Login Success", OK);
+    private void sendOtpCode(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
+        String otpCode = generateOtpCode();
+        userService.saveOtpCode(user.getEmail(), otpCode);
+        String message = "Your OTP code is: " + otpCode;
+        emailService.sendOtpMessage(user.getEmail(), message);
+        response.setContentType(APPLICATION_JSON_VALUE);
+        response.setStatus(OK.value());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), user);
     }
 
-    private Object sendQrCode(HttpServletRequest request, UserDto user) {
-        return getResponse(request, Map.of("user",user), "Please enter QR code", OK);
-    }
-
-//    @Override
-//    protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException, ServletException {
-//        super.unsuccessfulAuthentication(request, response, failed);
-//    }
 }

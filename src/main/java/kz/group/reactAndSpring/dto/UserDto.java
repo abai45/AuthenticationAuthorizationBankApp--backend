@@ -1,11 +1,6 @@
 package kz.group.reactAndSpring.dto;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
-import kz.group.reactAndSpring.entity.RoleEntity;
 import lombok.Data;
-
-import java.time.LocalDateTime;
 
 @Data
 public class UserDto {
@@ -20,9 +15,10 @@ public class UserDto {
     private String createdAt;
     private String updatedAt;
     private String roles;
-    private String authorithies;
+    private String authorities;
     private String imgUrl;
-    private String qrCodeImageUri;
+    //private String qrCodeImageUri;
+    private String otpCode;
     private String lastLogin;
     private boolean accountNonExpired;
     private boolean accountNonLocked;

@@ -6,7 +6,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kz.group.reactAndSpring.domain.ApiAuthentication;
 import kz.group.reactAndSpring.domain.RequestContext;
-import kz.group.reactAndSpring.domain.Token;
 import kz.group.reactAndSpring.domain.TokenData;
 import kz.group.reactAndSpring.service.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -18,35 +17,28 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 
-import static kz.group.reactAndSpring.constant.Constants.OPTIONS_HTTP_METHOD;
-import static kz.group.reactAndSpring.constant.Constants.PUBLIC_URLS;
-import static kz.group.reactAndSpring.enumeration.TokenType.ACCESS;
-import static kz.group.reactAndSpring.enumeration.TokenType.REFRESH;
 import static kz.group.reactAndSpring.utils.RequestUtils.handleErrorResponse;
 
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class ApiAuthenticationFilter extends OncePerRequestFilter {
-
+public class AuthorizationFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
+
+    public static final String BEARER_PREFIX = "Bearer ";
+    public static final String HEADER_NAME = "Authorization";
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         try {
-            var accessToken = jwtService.extractToken(request, ACCESS.getValue());
-            if(accessToken.isPresent() && jwtService.getTokenData(accessToken.get(), TokenData::isValid)) {
-                SecurityContextHolder.getContext().setAuthentication(getAuthentication(accessToken.get(),request));
-                RequestContext.setUserId(jwtService.getTokenData(accessToken.get(), TokenData::getUser).getId());
-            } else {
-                var refreshToken = jwtService.extractToken(request, REFRESH.getValue());
-                if(refreshToken.isPresent() && jwtService.getTokenData(refreshToken.get(), TokenData::isValid)) {
-                    var user = jwtService.getTokenData(refreshToken.get(), TokenData::getUser);
-                    SecurityContextHolder.getContext().setAuthentication(getAuthentication(jwtService.createToken(user, Token::getAccess_token), request));
-                    jwtService.addCokie(response,user,ACCESS);
-                    RequestContext.setUserId(user.getId());
+            String authorizationHeader = request.getHeader(HEADER_NAME);
+            if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
+                String token = authorizationHeader.substring(BEARER_PREFIX.length());
+                if (jwtService.getTokenData(token, TokenData::isValid)) {
+                    Authentication authentication = getAuthentication(token, request);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    RequestContext.setUserId(jwtService.getTokenData(token, TokenData::getUser).getId());
                 } else {
                     SecurityContextHolder.clearContext();
                 }
@@ -60,16 +52,18 @@ public class ApiAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        var shouldNotFilter = request.getMethod().equalsIgnoreCase(OPTIONS_HTTP_METHOD) || Arrays.asList(PUBLIC_URLS).contains(request.getRequestURI());
-        if(shouldNotFilter) {
-            RequestContext.setUserId(0L);
-        }
-        return shouldNotFilter;
+        return false;
     }
 
     private Authentication getAuthentication(String token, HttpServletRequest request) {
-        var authentication = ApiAuthentication.authenticated(jwtService.getTokenData(token, TokenData::getUser), jwtService.getTokenData(token, TokenData::getAuthorities));
-        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        TokenData tokenData = TokenData.builder()
+                .user(jwtService.getTokenData(token, TokenData::getUser))
+                .claims(jwtService.getTokenData(token, TokenData::getClaims))
+                .valid(true)
+                .authorities(jwtService.getTokenData(token, TokenData::getAuthorities))
+                .build();
+        Authentication authentication = ApiAuthentication.authenticated(tokenData.getUser(), tokenData.getAuthorities());
+        ((ApiAuthentication) authentication).setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         return authentication;
     }
 }

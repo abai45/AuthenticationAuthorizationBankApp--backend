@@ -15,9 +15,9 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "credentionals")
+@Table(name = "credentials")
 @JsonInclude(NON_DEFAULT)
-public class CredentionalEntity extends Autitable{
+public class CredentialEntity extends Autitable{
     private String password;
     @OneToOne(targetEntity = UserEntity.class, fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
@@ -27,7 +27,7 @@ public class CredentionalEntity extends Autitable{
     @JsonProperty("user_id")
     private UserEntity userEntity;
 
-    public CredentionalEntity(UserEntity userEntity, String password) {
+    public CredentialEntity(UserEntity userEntity, String password) {
         this.userEntity = userEntity;
         this.password = password;
 

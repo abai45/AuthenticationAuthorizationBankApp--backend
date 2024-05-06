@@ -17,7 +17,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "confimations")
+@Table(name = "confirmations")
 @JsonInclude(NON_DEFAULT)
 public class ConfirmationEntity extends Autitable {
     private String key;

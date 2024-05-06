@@ -20,6 +20,7 @@ public class EmailServiceImpl implements EmailService {
 
     private static final String NEW_USER_ACCOUNT_VERIFICATION = "New User Account Verification";
     private static final String RESET_PASSWORD_REQUEST = "Reset Password Request";
+    private static final String VERIFY_OTP_LOGIN = "Verify OTP Login";
     private final JavaMailSender mailSender;
     @Value("${spring.mail.verify.host}")
     private String host;
@@ -28,13 +29,13 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendNewAccountEmail(String name, String email, String token) {
+    public void sendNewAccountEmail(String name, String otpCode, String email, String token) {
         try {
             var message = new SimpleMailMessage();
             message.setSubject(NEW_USER_ACCOUNT_VERIFICATION);
             message.setFrom(fromEmail);
             message.setTo(email);
-            message.setText(getEmailMessage(name,host,token));
+            message.setText(getEmailMessage(name,otpCode,host,token));
             mailSender.send(message);
         } catch (Exception exception) {
             log.error(exception.getMessage());
@@ -51,6 +52,22 @@ public class EmailServiceImpl implements EmailService {
             message.setFrom(fromEmail);
             message.setTo(email);
             message.setText(getResetPasswordMessage(name,host,token));
+            mailSender.send(message);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("Unable to send email");
+        }
+    }
+
+    @Override
+    @Async
+    public void sendOtpMessage(String email, String textTo) {
+        try {
+            var message = new SimpleMailMessage();
+            message.setSubject(VERIFY_OTP_LOGIN);
+            message.setFrom(fromEmail);
+            message.setTo(email);
+            message.setText(textTo);
             mailSender.send(message);
         } catch (Exception exception) {
             log.error(exception.getMessage());

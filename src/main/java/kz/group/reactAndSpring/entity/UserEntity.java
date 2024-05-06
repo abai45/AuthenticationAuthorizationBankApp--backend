@@ -33,10 +33,7 @@ public class UserEntity extends Autitable{
     private boolean accountNonLocked;
     private boolean enabled;
     private boolean mfa;
-    @JsonIgnore
-    private String qrCodeSecret;
-    @Column(columnDefinition = "text")
-    private String qrCodeImageUri;
+    private String otpCode;
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",

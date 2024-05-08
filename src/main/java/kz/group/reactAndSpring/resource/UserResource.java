@@ -67,6 +67,12 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Otp code is valid", OK));
     }
 
+    @PatchMapping("/updatepassword")
+    public ResponseEntity<Response> updatePassword(@AuthenticationPrincipal UserDto user, @RequestBody UpdatePasswordRequest passwordRequest, HttpServletRequest request) {
+        userService.updatePassword(user.getUserId(), passwordRequest.getPassword(), passwordRequest.getNewPassword(), passwordRequest.getConfirmNewPassword());
+        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password updated successfully", OK));
+    }
+
     @PostMapping("/resetpassword")
     public ResponseEntity<Response> resetPassword(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
         userService.resetPassword(emailRequest.getEmail());
@@ -83,6 +89,13 @@ public class UserResource {
     public ResponseEntity<Response> doResetPassword(@RequestBody @Valid ResetPasswordRequestDto resetPasswordRequest, HttpServletRequest request) {
         userService.updatePassword(resetPasswordRequest.getUserId(), resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password reset successfully", OK));
+    }
+
+    //New
+    @PostMapping("/info")
+    public ResponseEntity<Response> userInfo(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
+        var user = userService.getUserByUserId(userPrincipal.getUserId());
+        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "User info retrieved", OK));
     }
 
     @GetMapping("/profile")
@@ -107,6 +120,23 @@ public class UserResource {
     public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
         userService.deleteUser(emailRequest.getEmail());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "User was deleted successfully", OK));
+    }
+    @PatchMapping("/toggleaccountexpired")
+    public ResponseEntity<Response> toggleAccountExpired(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        userService.toggleAccountExpired(user.getUserId());
+        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
+    }
+
+    @PatchMapping("/toggleaccountlocked")
+    public ResponseEntity<Response> toggleAccountLocked(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        userService.toggleAccountLocked(user.getUserId());
+        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
+    }
+
+    @PatchMapping("/toggleaccountenabled")
+    public ResponseEntity<Response> toggleAccountEnabled(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        userService.toggleAccountEnabled(user.getUserId());
+        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
 
     private URI getUri() {

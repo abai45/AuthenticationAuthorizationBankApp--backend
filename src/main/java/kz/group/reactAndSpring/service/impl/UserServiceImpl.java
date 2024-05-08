@@ -1,11 +1,8 @@
 package kz.group.reactAndSpring.service.impl;
 
 import jakarta.transaction.Transactional;
-import kz.group.reactAndSpring.cache.CacheStore;
 import kz.group.reactAndSpring.domain.RequestContext;
-import kz.group.reactAndSpring.domain.UserPrincipal;
 import kz.group.reactAndSpring.dto.UserDto;
-import kz.group.reactAndSpring.dto.UserTokenResponseDto;
 import kz.group.reactAndSpring.entity.ConfirmationEntity;
 import kz.group.reactAndSpring.entity.CredentialEntity;
 import kz.group.reactAndSpring.entity.RoleEntity;
@@ -14,28 +11,23 @@ import kz.group.reactAndSpring.enumeration.AuthorityEnum;
 import kz.group.reactAndSpring.enumeration.EventType;
 import kz.group.reactAndSpring.enumeration.LoginType;
 import kz.group.reactAndSpring.event.UserEvent;
-import kz.group.reactAndSpring.domain.Token;
 import kz.group.reactAndSpring.exception.ApiException;
 import kz.group.reactAndSpring.repository.ConfirmationRepository;
 import kz.group.reactAndSpring.repository.CredentialRepository;
 import kz.group.reactAndSpring.repository.RoleRepository;
 import kz.group.reactAndSpring.repository.UserRepository;
-import kz.group.reactAndSpring.service.JwtService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.catalina.User;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Map;
-import java.util.Optional;
 
 import static java.time.LocalDateTime.now;
+import static kz.group.reactAndSpring.constant.Constants.NINETY_DAYS;
 import static kz.group.reactAndSpring.enumeration.EventType.RESETPASSWORD;
 import static kz.group.reactAndSpring.utils.UserUtils.*;
 import static kz.group.reactAndSpring.validation.UserValidation.verifyAccountStatus;
@@ -49,7 +41,6 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
-    private final CacheStore<String, Integer> userCacheStore;
     private final BCryptPasswordEncoder encoder;
     private final ApplicationEventPublisher publisher;
     @Override
@@ -90,21 +81,20 @@ public class UserServiceImpl implements UserService {
         RequestContext.setUserId(userEntity.getId());
         switch (loginType) {
             case LOGIN_ATTEMPT -> {
-                if(userCacheStore.get(userEntity.getEmail()) == null) {
-                    userEntity.setLoginAttempts(0);
-                    userEntity.setAccountNonLocked(true);
-                }
                 userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
-                userCacheStore.put(userEntity.getEmail(), userEntity.getLoginAttempts());
-                if (userCacheStore.get(userEntity.getEmail()) > 5) {
+                if(userEntity.getLoginAttempts() >= 5) {
                     userEntity.setAccountNonLocked(false);
+                    userEntity.setLockTime(now());
                 }
             }
             case LOGIN_SUCCESS -> {
-                userEntity.setAccountNonLocked(true);
-                userEntity.setLoginAttempts(0);
-                userEntity.setLastLogin(now());
-                userCacheStore.remove(userEntity.getEmail());
+                if(userEntity.getLockTime() == null || userEntity.getLockTime().plusMinutes(15).isAfter(now())) {
+                    userEntity.setAccountNonLocked(true);
+                    userEntity.setLoginAttempts(0);
+                    userEntity.setLastLogin(now());
+                } else {
+                    throw new ApiException("Your account is locked on 15 minutes");
+                }
             }
         }
         userRepository.save(userEntity);
@@ -139,6 +129,21 @@ public class UserServiceImpl implements UserService {
             confirmationRepository.save(confirmationEntity);
             publisher.publishEvent(new UserEvent(user, RESETPASSWORD, Map.of("key", confirmationEntity.getKey())));
         }
+    }
+
+    @Override
+    public void updatePassword(String userId, String currentPassword, String newPassword, String confirmNewPassword) {
+        if(!confirmNewPassword.equals(newPassword)) {
+            throw new ApiException("Password does not match. Please try again.");
+        }
+        var user = getUserEntityByUserId(userId);
+        verifyAccountStatus(user);
+        var credentials = getUserCredentialById(user.getId());
+        if(!encoder.matches(currentPassword, credentials.getPassword())) {
+            throw new ApiException("Existing password does not match. Please try again.");
+        }
+        credentials.setPassword(encoder.encode(newPassword));
+        credentialRepository.save(credentials);
     }
 
     @Override
@@ -237,14 +242,36 @@ public class UserServiceImpl implements UserService {
         userRepository.save(userEntity);
     }
 
+
+    @Override
+    public void toggleAccountExpired(String userId) {
+        var user = getUserEntityByUserId(userId);
+        user.setAccountNonExpired(!user.isAccountNonExpired());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void toggleAccountLocked(String userId) {
+        var user = getUserEntityByUserId(userId);
+        user.setAccountNonLocked(!user.isAccountNonLocked());
+        userRepository.save(user);
+    }
+
+    @Override
+    public void toggleAccountEnabled(String userId) {
+        var user = getUserEntityByUserId(userId);
+        user.setEnabled(!user.isEnabled());
+        userRepository.save(user);
+    }
+
     private UserEntity getUserEntityByUserId(String userId) {
         var userByUserId = userRepository.findUserByUserId(userId);
-        return userByUserId.orElseThrow(() -> new ApiException("User not found"));
+        return userByUserId.orElseThrow(() -> new ApiException("User by user id not found"));
     }
 
     private UserEntity getUserEntityById(Long id) {
         var userById = userRepository.findById(id);
-        return userById.orElseThrow(() -> new ApiException("User not found"));
+        return userById.orElseThrow(() -> new ApiException("User by id not found"));
     }
 
     private ConfirmationEntity getUserConfirmation(String key) {
@@ -255,10 +282,10 @@ public class UserServiceImpl implements UserService {
     }
     private UserEntity getUserEntityByEmail(String email) {
         var userByEmail = userRepository.findByEmailIgnoreCase(email);
-        return userByEmail.orElseThrow(() -> new ApiException("User is not found"));
+        return userByEmail.orElseThrow(() -> new ApiException("User by email is not found"));
     }
     private UserEntity getUserEntityByOtpCode(String otp) {
         var userByEmail = userRepository.findUserByOtpCode(otp);
-        return userByEmail.orElseThrow(() -> new ApiException("User is not found"));
+        return userByEmail.orElseThrow(() -> new ApiException("User by otp is not found"));
     }
 }

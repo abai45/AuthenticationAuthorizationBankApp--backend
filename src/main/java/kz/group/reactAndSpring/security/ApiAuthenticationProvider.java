@@ -2,7 +2,7 @@ package kz.group.reactAndSpring.security;
 
 import kz.group.reactAndSpring.domain.ApiAuthentication;
 import kz.group.reactAndSpring.domain.UserPrincipal;
-import kz.group.reactAndSpring.exception.ApiException;
+import kz.group.reactAndSpring.exception.*;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.*;
@@ -38,7 +38,7 @@ public class ApiAuthenticationProvider implements AuthenticationProvider {
             if(encoder.matches(apiAuth.getPassword(), userCredential.getPassword())) {
                 return authenticated(user, userPrincipal.getAuthorities());
             } else {
-                throw new BadCredentialsException("Email or password is incorrect.");
+                throw new BadCredentialsExceptionClass("Email or password is incorrect.");
             }
         } else {
             throw new ApiException("Unable to authentication");
@@ -54,16 +54,16 @@ public class ApiAuthenticationProvider implements AuthenticationProvider {
 
     private final Consumer<UserPrincipal> validAccount = userPrincipal -> {
         if(!userPrincipal.isAccountNonLocked()) {
-            throw new LockedException("Your account is locked");
+            throw new LockedExceptionClass("Your account is locked");
         }
         if(!userPrincipal.isEnabled()) {
-            throw new DisabledException("Your account is disabled");
+            throw new DisabledExceptionClass("Your account is disabled");
         }
         if(!userPrincipal.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredException("Your password has expired. Please reset your password");
+            throw new CredentialsExpiredExceptionClass("Your password has expired. Please reset your password");
         }
         if(!userPrincipal.isAccountNonExpired()) {
-            throw new DisabledException("Your account has expired. Please contact with administrator");
+            throw new DisabledExceptionClass("Your account has expired. Please contact with administrator");
         }
     };
 }

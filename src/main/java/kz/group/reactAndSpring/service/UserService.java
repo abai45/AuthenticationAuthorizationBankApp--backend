@@ -16,13 +16,19 @@ public interface UserService {
     UserDto getUserByEmail(String email);
     CredentialEntity getUserCredentialById(Long id);
     void resetPassword(String email);
+    void updatePassword(String userId, String password, String newPassword, String confirmNewPassword);
     UserDto verifyConfirmationKey(String key);
     void updatePassword(String userId, String newPassword, String confirmNewPassword);
     void verifyOtpCode(String otpCode);
     UserDto setMfa(Long id);
-    void deleteUser(String email);
     void saveOtpCode(String email, String otpCode);
     UserDto UserOtpVerify(String otpCode);
     UserDto updateUser(String userId, String firstName, String lastName, String email, String phone);
     void updateRole(String userId, String role);
+    void deleteUser(String email);
+
+    void toggleAccountExpired(String userId);
+    void toggleAccountLocked(String userId);
+    void toggleAccountEnabled(String userId);
+
 }

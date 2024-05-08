@@ -70,9 +70,9 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
         UserDto user = (UserDto) authentication.getPrincipal();
         userService.updateLoginAttempt(user.getEmail(), LOGIN_SUCCESS);
         if (user.isMfa()) {
-            sendOtpCode(request, response, user); // Если включена двухфакторная аутентификация, отправляем OTP-код
+            sendOtpCode(request, response, user);
         } else {
-            sendResponse(request, response, user); // Иначе отправляем токены доступа и обновления
+            sendResponse(request, response, user);
         }
     }
 

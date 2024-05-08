@@ -3,6 +3,10 @@ package kz.group.reactAndSpring.resource;
 import kz.group.reactAndSpring.domain.ErrorResponse;
 import kz.group.reactAndSpring.exception.*;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -23,7 +27,7 @@ public class ExceptionHandlerResource {
 
         return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
     }
-    @ExceptionHandler(LockedExceptionClass.class)
+    @ExceptionHandler(LockedException.class)
     public ResponseEntity<ErrorResponse> handleLockedException(ApiException e) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(e.getMessage());
@@ -31,7 +35,7 @@ public class ExceptionHandlerResource {
 
         return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
     }
-    @ExceptionHandler(DisabledExceptionClass.class)
+    @ExceptionHandler(DisabledException.class)
     public ResponseEntity<ErrorResponse> handleDisabledException(ApiException e) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(e.getMessage());
@@ -39,7 +43,7 @@ public class ExceptionHandlerResource {
 
         return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
     }
-    @ExceptionHandler(CredentialsExpiredExceptionClass.class)
+    @ExceptionHandler(CredentialsExpiredException.class)
     public ResponseEntity<ErrorResponse> handleCredentialsExpiredException(ApiException e) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(e.getMessage());
@@ -47,7 +51,7 @@ public class ExceptionHandlerResource {
 
         return ResponseEntity.status(BAD_REQUEST).body(errorResponse);
     }
-    @ExceptionHandler(BadCredentialsExceptionClass.class)
+    @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(ApiException e) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(e.getMessage());

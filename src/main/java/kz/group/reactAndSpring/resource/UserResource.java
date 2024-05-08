@@ -10,13 +10,20 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import static java.util.Collections.emptyMap;
+import static kz.group.reactAndSpring.constant.Constants.IMAGE_DIRECTORY;
 import static kz.group.reactAndSpring.utils.RequestUtils.getResponse;
 import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.IMAGE_JPEG_VALUE;
+import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 
 @RestController
 @RequiredArgsConstructor
@@ -116,11 +123,17 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Role updated successfully", OK));
     }
 
-    @PostMapping("/delete")
-    public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
-        userService.deleteUser(emailRequest.getEmail());
-        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "User was deleted successfully", OK));
+    @PatchMapping("/photo")
+    public ResponseEntity<Response> uploadPhoto(@AuthenticationPrincipal UserDto user, @RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        var imageUrl = userService.uploadPhoto(user.getUserId(), file);
+        return ResponseEntity.ok().body(getResponse(request,Map.of("imageUrl", imageUrl), "Photo updated successfully", OK));
     }
+
+    @GetMapping(value = "/images/{filename}", produces = { IMAGE_PNG_VALUE, IMAGE_JPEG_VALUE})
+    public byte[] getPhoto(@PathVariable("filename") String filename) throws IOException {
+        return Files.readAllBytes(Paths.get(IMAGE_DIRECTORY + filename));
+    }
+
     @PatchMapping("/toggleaccountexpired")
     public ResponseEntity<Response> toggleAccountExpired(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         userService.toggleAccountExpired(user.getUserId());
@@ -137,6 +150,13 @@ public class UserResource {
     public ResponseEntity<Response> toggleAccountEnabled(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         userService.toggleAccountEnabled(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
+    }
+
+
+    @PostMapping("/delete")
+    public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
+        userService.deleteUser(emailRequest.getEmail());
+        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "User was deleted successfully", OK));
     }
 
     private URI getUri() {

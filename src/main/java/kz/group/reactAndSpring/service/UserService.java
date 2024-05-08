@@ -6,6 +6,7 @@ import kz.group.reactAndSpring.entity.CredentialEntity;
 import kz.group.reactAndSpring.entity.RoleEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.enumeration.LoginType;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     void createUser(String firstName, String lastName, String email, String password);
@@ -31,4 +32,5 @@ public interface UserService {
     void toggleAccountLocked(String userId);
     void toggleAccountEnabled(String userId);
 
+    String uploadPhoto(String userId, MultipartFile file);
 }

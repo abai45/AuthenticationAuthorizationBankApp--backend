@@ -38,7 +38,7 @@ public class ApiAuthenticationProvider implements AuthenticationProvider {
             if(encoder.matches(apiAuth.getPassword(), userCredential.getPassword())) {
                 return authenticated(user, userPrincipal.getAuthorities());
             } else {
-                throw new BadCredentialsExceptionClass("Email or password is incorrect.");
+                throw new BadCredentialsException("Email or password is incorrect.");
             }
         } else {
             throw new ApiException("Unable to authentication");
@@ -54,16 +54,16 @@ public class ApiAuthenticationProvider implements AuthenticationProvider {
 
     private final Consumer<UserPrincipal> validAccount = userPrincipal -> {
         if(!userPrincipal.isAccountNonLocked()) {
-            throw new LockedExceptionClass("Your account is locked");
+            throw new LockedException("Your account is locked");
         }
         if(!userPrincipal.isEnabled()) {
-            throw new DisabledExceptionClass("Your account is disabled");
+            throw new DisabledException("Your account is disabled");
         }
         if(!userPrincipal.isCredentialsNonExpired()) {
-            throw new CredentialsExpiredExceptionClass("Your password has expired. Please reset your password");
+            throw new CredentialsExpiredException("Your password has expired. Please reset your password");
         }
         if(!userPrincipal.isAccountNonExpired()) {
-            throw new DisabledExceptionClass("Your account has expired. Please contact with administrator");
+            throw new DisabledException("Your account has expired. Please contact with administrator");
         }
     };
 }

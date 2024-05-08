@@ -1,15 +1,14 @@
 package kz.group.reactAndSpring.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.exception.ApiException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.LockedException;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.security.authentication.*;
 
 import java.nio.file.AccessDeniedException;
 import java.util.Map;
@@ -20,8 +19,7 @@ import static java.time.LocalDateTime.now;
 import static java.util.Collections.emptyMap;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.exception.ExceptionUtils.getRootCauseMessage;
-import static org.springframework.http.HttpStatus.FORBIDDEN;
-import static org.springframework.http.HttpStatus.UNAUTHORIZED;
+import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 public class RequestUtils {
@@ -57,10 +55,25 @@ public class RequestUtils {
         return new Response(now().toString(), status.value(), request.getRequestURI(), HttpStatus.valueOf(status.value()), message, EMPTY, data);
     }
 
+    public static Response handleErrorResponse(String message, String ex, HttpServletRequest request, HttpStatusCode status) {
+        return new Response(now().toString(), status.value(),request.getRequestURI(), HttpStatus.valueOf(status.value()), message, ex, emptyMap());
+    }
 
     public static void handleErrorResponse(HttpServletRequest request, HttpServletResponse response,Exception e) {
         if(e instanceof AccessDeniedException) {
-            Response apiResponse = getErrorResponse(request, response, e, FORBIDDEN);
+            var apiResponse = getErrorResponse(request, response, e, FORBIDDEN);
+            writeResponse.accept(response, apiResponse);
+        } else if (e instanceof InsufficientAuthenticationException) {
+            var apiResponse = getErrorResponse(request, response, e, UNAUTHORIZED);
+            writeResponse.accept(response, apiResponse);
+        } else if (e instanceof MismatchedInputException) {
+            var apiResponse = getErrorResponse(request, response, e, BAD_REQUEST);
+            writeResponse.accept(response, apiResponse);
+        } else if (e instanceof DisabledException || e instanceof LockedException || e instanceof BadCredentialsException || e instanceof CredentialsExpiredException || e instanceof ApiException) {
+            var apiResponse = getErrorResponse(request, response, e, BAD_REQUEST);
+            writeResponse.accept(response, apiResponse);
+        } else {
+            Response apiResponse = getErrorResponse(request, response, e, INTERNAL_SERVER_ERROR);
             writeResponse.accept(response, apiResponse);
         }
     }

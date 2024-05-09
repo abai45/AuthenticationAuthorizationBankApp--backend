@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 import java.net.URI;
@@ -25,6 +26,7 @@ import static org.springframework.http.HttpStatus.*;
 import static org.springframework.http.MediaType.IMAGE_JPEG_VALUE;
 import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequiredArgsConstructor
 @RequestMapping(path = {"/user"})
@@ -86,10 +88,19 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "We sent you an email to reset your password", OK));
     }
 
+//    @GetMapping("/verify/password")
+//    public ResponseEntity<Response> verifyPassword(@RequestParam("key") String key, HttpServletRequest request) {
+//        var user = userService.verifyConfirmationKey(key);
+//        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Enter new password", OK));
+//    }
     @GetMapping("/verify/password")
-    public ResponseEntity<Response> verifyPassword(@RequestParam("key") String key, HttpServletRequest request) {
+    public ModelAndView verifyPasswordPage(@RequestParam("key") String key, HttpServletRequest request) {
         var user = userService.verifyConfirmationKey(key);
-        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Enter new password", OK));
+        ModelAndView modelAndView = new ModelAndView();
+        modelAndView.addObject("user", user);
+        modelAndView.addObject("message", "Enter new password");
+        modelAndView.setViewName("index"); // Указываем имя HTML-файла без расширения
+        return modelAndView;
     }
 
     @PostMapping("/resetpassword/reset")
@@ -151,7 +162,6 @@ public class UserResource {
         userService.toggleAccountEnabled(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
-
 
     @PostMapping("/delete")
     public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {

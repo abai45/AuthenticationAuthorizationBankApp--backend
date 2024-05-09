@@ -2,7 +2,7 @@ package kz.group.reactAndSpring.constant;
 
 public class Constants {
     public static final String IMAGE_DIRECTORY = System.getProperty("user.home") + "/images/";
-    public static final String[] PUBLIC_URLS = { "/user/images/**", "/user/mfa/set", "/user/delete" ,"/user/resetpassword/reset/**", "/user/verify/resetpassword/**", "/user/resetpassword/**", "/user/verify/**", "/user/login/**", "/user/verify/account/**", "/user/register/**", "/user/new/password/**", "/user/verify/**", "/user/resetpassword/**", "/user/image/**", "/user/verify/password/**" };
+    public static final String[] PUBLIC_URLS = { "/index.html","/user/images/**", "/user/mfa/set", "/user/delete" ,"/user/resetpassword/reset/**", "/user/verify/resetpassword/**", "/user/resetpassword/**", "/user/verify/**", "/user/login/**", "/user/verify/account/**", "/user/register/**", "/user/new/password/**", "/user/verify/**", "/user/resetpassword/**", "/user/image/**", "/user/verify/password/**" };
     public static final String LOGIN_PATH = "/user/login";
     public static final String BASE_PATH = "/**";
     public static final String FILE_NAME = "File-Name";

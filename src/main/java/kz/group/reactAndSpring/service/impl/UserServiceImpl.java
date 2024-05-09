@@ -164,7 +164,6 @@ public class UserServiceImpl implements UserService {
            throw new ApiException("Incorrect token");
        }
        verifyAccountStatus(userEntity);
-       confirmationRepository.delete(confirmationEntity);
        return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
     }
 
@@ -174,8 +173,11 @@ public class UserServiceImpl implements UserService {
             throw new ApiException("Password does not match. Please try again.");
         }
         var user = getUserByUserId(userId);
+        var userEntity = getUserEntityByUserId(userId);
+        var confirmationEntity = getUserConfirmation(userEntity);
         var credentials = getUserCredentialById(user.getId());
         credentials.setPassword(encoder.encode(newPassword));
+        confirmationRepository.delete(confirmationEntity);
         credentialRepository.save(credentials);
     }
 

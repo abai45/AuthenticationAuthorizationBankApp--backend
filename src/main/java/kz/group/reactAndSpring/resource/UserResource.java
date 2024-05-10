@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.*;
+import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.service.TokenService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -53,9 +54,15 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "MFA status is " + user.isMfa(), OK));
     }
 
+    @PostMapping("/resendotp")
+    public ResponseEntity<Response> resendOtp(@RequestBody @Valid EmailRequestDto emailRequestDto, HttpServletRequest request) {
+        userService.resendOtpCode(emailRequestDto.getEmail());
+        return ResponseEntity.ok().body(getResponse(request, emptyMap(), "We send new OTP code to email", OK));
+    }
+
     @PostMapping("/login/otp")
     public ResponseEntity<UserTokenResponseDto> verifyOtp(@RequestBody @Valid OtpCodeRequestDto otpRequest, HttpServletRequest request) {
-        var user = userService.UserOtpVerify(otpRequest.getOtpCode());
+        var user = userService.userOtpVerify(otpRequest.getEmail(), otpRequest.getOtpCode());
         if (user != null) {
             UserTokenResponseDto tokenResponse = tokenService.generateTokens(user);
             return ResponseEntity.ok().body(tokenResponse);
@@ -64,15 +71,9 @@ public class UserResource {
         }
     }
 
-    @GetMapping("/verify/account")
-    public ResponseEntity<Response> verifyAccount(@RequestParam("key") String key, HttpServletRequest request) {
-        var user = userService.verifyAccountKey(key);
-        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Enter OTP code", OK));
-    }
-
     @PostMapping("/verify/account/otp")
     public ResponseEntity<Response> verifyOtpAccount(@RequestBody @Valid OtpCodeRequestDto otpCodeRequest, HttpServletRequest request) {
-        userService.verifyOtpCode(otpCodeRequest.getOtpCode());
+        userService.verifyOtpCode(otpCodeRequest.getEmail(), otpCodeRequest.getOtpCode());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Otp code is valid", OK));
     }
 

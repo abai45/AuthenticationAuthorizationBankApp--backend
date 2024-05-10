@@ -16,6 +16,7 @@ import kz.group.reactAndSpring.repository.ConfirmationRepository;
 import kz.group.reactAndSpring.repository.CredentialRepository;
 import kz.group.reactAndSpring.repository.RoleRepository;
 import kz.group.reactAndSpring.repository.UserRepository;
+import kz.group.reactAndSpring.service.EmailService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final CredentialRepository credentialRepository;
     private final ConfirmationRepository confirmationRepository;
+    private final EmailService emailService;
     private final BCryptPasswordEncoder encoder;
     private final ApplicationEventPublisher publisher;
     @Override
@@ -182,10 +184,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void verifyOtpCode(String otpCode) {
-        var user = getUserEntityByOtpCode(otpCode);
+    public void verifyOtpCode(String email,String otpCode) {
+        var user = getUserEntityByEmail(email);
         if(!user.getOtpCode().equals(otpCode)) {
-            throw new ApiException("Incorrect otp code");
+            throw new ApiException("Incorrect OTP code");
         }
         var confirmationEntity = getUserConfirmation(user);
         user.setEnabled(true);
@@ -207,6 +209,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public UserDto userOtpVerify(String email, String otpCode) {
+        var userEntity = getUserEntityByEmail(email);
+        if (!userEntity.getOtpCode().equals(otpCode)) {
+            throw new ApiException("OTP code is not correct");
+        }
+        userEntity.setOtpCode(null);
+        userRepository.save(userEntity);
+        return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
+    }
+    @Override
     public void deleteUser(String email) {
         var user = getUserEntityByEmail(email);
         if (user == null) {
@@ -223,14 +235,12 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto UserOtpVerify(String otpCode) {
-        var userEntity = getUserEntityByOtpCode(otpCode);
-        if (userEntity == null) {
-            throw new ApiException("User not found");
-        }
-        userEntity.setOtpCode(null);
-        userRepository.save(userEntity);
-        return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
+    public void resendOtpCode(String email) {
+        var user = getUserEntityByEmail(email);
+        String otpCode = generateOtpCode();
+        user.setOtpCode(otpCode);
+        userRepository.save(user);
+        emailService.sendOtpMessageHtmlPage(user.getFirstName(), email, otpCode);
     }
 
     @Override

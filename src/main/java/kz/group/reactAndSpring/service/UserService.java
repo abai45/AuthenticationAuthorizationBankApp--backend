@@ -20,17 +20,17 @@ public interface UserService {
     void updatePassword(String userId, String password, String newPassword, String confirmNewPassword);
     UserDto verifyConfirmationKey(String key);
     void updatePassword(String userId, String newPassword, String confirmNewPassword);
-    void verifyOtpCode(String otpCode);
+    void verifyOtpCode(String email, String otpCode);
     UserDto setMfa(Long id);
+    void resendOtpCode(String email);
     void saveOtpCode(String email, String otpCode);
-    UserDto UserOtpVerify(String otpCode);
+    UserDto userOtpVerify(String email, String otpCode);
     UserDto updateUser(String userId, String firstName, String lastName, String email, String phone);
     void updateRole(String userId, String role);
     void deleteUser(String email);
+    String uploadPhoto(String userId, MultipartFile file);
 
     void toggleAccountExpired(String userId);
     void toggleAccountLocked(String userId);
     void toggleAccountEnabled(String userId);
-
-    String uploadPhoto(String userId, MultipartFile file);
 }

@@ -88,19 +88,10 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "We sent you an email to reset your password", OK));
     }
 
-//    @GetMapping("/verify/password")
-//    public ResponseEntity<Response> verifyPassword(@RequestParam("key") String key, HttpServletRequest request) {
-//        var user = userService.verifyConfirmationKey(key);
-//        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Enter new password", OK));
-//    }
     @GetMapping("/verify/password")
-    public ModelAndView verifyPasswordPage(@RequestParam("key") String key, HttpServletRequest request) {
+    public ResponseEntity<Response> verifyPassword(@RequestParam("key") String key, HttpServletRequest request) {
         var user = userService.verifyConfirmationKey(key);
-        ModelAndView modelAndView = new ModelAndView();
-        modelAndView.addObject("user", user);
-        modelAndView.addObject("message", "Enter new password");
-        modelAndView.setViewName("index"); // Указываем имя HTML-файла без расширения
-        return modelAndView;
+        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Enter new password", OK));
     }
 
     @PostMapping("/resetpassword/reset")

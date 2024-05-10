@@ -93,8 +93,9 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private void sendOtpCode(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
         String otpCode = generateOtpCode();
         userService.saveOtpCode(user.getEmail(), otpCode);
-        String message = "Your OTP code is: " + otpCode;
-        emailService.sendOtpMessage(user.getEmail(), message);
+//        String message = "Your OTP code for two-factor authentication is:" + otpCode;
+//        emailService.sendOtpMessage(user.getEmail(), message);
+        emailService.sendOtpMessageHtmlPage(user.getFirstName(),user.getEmail(), otpCode);
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
         ObjectMapper mapper = new ObjectMapper();

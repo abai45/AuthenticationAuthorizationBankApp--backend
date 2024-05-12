@@ -91,6 +91,11 @@ public class UserServiceImpl implements UserService {
                 if(userEntity.getLockTime() != null && userEntity.getLockTime().plusMinutes(15).isAfter(now())) {
                     throw new ApiException("Your account is locked for 15 minutes");
                 } else {
+                    if(userEntity.getLockTime() != null && userEntity.getLockTime().plusMinutes(15).isBefore(now())) {
+                        userEntity.setAccountNonLocked(true);
+                        userEntity.setLoginAttempts(0);
+                        userEntity.setLockTime(null);
+                    }
                     userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
                     if(userEntity.getLoginAttempts() >= 5) {
                         userEntity.setAccountNonLocked(false);
@@ -106,7 +111,7 @@ public class UserServiceImpl implements UserService {
         }
         userRepository.save(userEntity);
     }
-    
+
     @Override
     public UserDto getUserByUserId(String userId) {
         var userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found"));
@@ -177,6 +182,10 @@ public class UserServiceImpl implements UserService {
         var confirmationEntity = getUserConfirmation(userEntity);
         var credentials = getUserCredentialById(user.getId());
         credentials.setPassword(encoder.encode(newPassword));
+        if(!userEntity.isEnabled()) {
+            userEntity.setEnabled(true);
+            userRepository.save(userEntity);
+        }
         confirmationRepository.delete(confirmationEntity);
         credentialRepository.save(credentials);
     }

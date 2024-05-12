@@ -6,6 +6,7 @@ import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.*;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.service.TokenService;
+import kz.group.reactAndSpring.service.TransactionService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,7 @@ import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 public class UserResource {
     private final UserService userService;
     private final TokenService tokenService;
+    private final TransactionService transactionService;
 
     @PostMapping("/register")
     public ResponseEntity<UserTokenResponseDto> saveUser(@RequestBody @Valid UserRequestDto user, HttpServletRequest request) {
@@ -101,13 +103,7 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password reset successfully", OK));
     }
 
-    //New
-    @PostMapping("/info")
-    public ResponseEntity<Response> userInfo(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
-        var user = userService.getUserByUserId(userPrincipal.getUserId());
-        return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "User info retrieved", OK));
-    }
-
+    //Profile
     @GetMapping("/profile")
     public ResponseEntity<Response> profile(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
         var user = userService.getUserByUserId(userPrincipal.getUserId());
@@ -154,6 +150,13 @@ public class UserResource {
         userService.toggleAccountEnabled(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
+
+    //Transaction
+//    @PostMapping("/credit")
+//    public ResponseEntity<Response> creditTransaction(@AuthenticationPrincipal UserDto user, TransactionRequestDto transactionRequest, HttpServletRequest request) {
+//        transactionService.creditTransaction(transactionRequest.getSourcePhone(), transactionRequest.getDestPhone(), transactionRequest.getAmount());
+//        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Credit transaction successfully", OK));
+//    }
 
     @PostMapping("/delete")
     public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {

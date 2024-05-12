@@ -28,14 +28,12 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.time.LocalDateTime.now;
 import static kz.group.reactAndSpring.constant.Constants.IMAGE_DIRECTORY;
-import static kz.group.reactAndSpring.constant.Constants.NINETY_DAYS;
 import static kz.group.reactAndSpring.enumeration.EventType.RESETPASSWORD;
 import static kz.group.reactAndSpring.utils.UserUtils.*;
 import static kz.group.reactAndSpring.validation.UserValidation.verifyAccountStatus;
@@ -90,25 +88,25 @@ public class UserServiceImpl implements UserService {
         RequestContext.setUserId(userEntity.getId());
         switch (loginType) {
             case LOGIN_ATTEMPT -> {
-                userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
-                if(userEntity.getLoginAttempts() >= 5) {
-                    userEntity.setAccountNonLocked(false);
-                    userEntity.setLockTime(now());
+                if(userEntity.getLockTime() != null && userEntity.getLockTime().plusMinutes(15).isAfter(now())) {
+                    throw new ApiException("Your account is locked for 15 minutes");
+                } else {
+                    userEntity.setLoginAttempts(userEntity.getLoginAttempts() + 1);
+                    if(userEntity.getLoginAttempts() >= 5) {
+                        userEntity.setAccountNonLocked(false);
+                        userEntity.setLockTime(now());
+                    }
                 }
             }
             case LOGIN_SUCCESS -> {
-                if(userEntity.getLockTime() == null || userEntity.getLockTime().plusMinutes(15).isAfter(now())) {
-                    userEntity.setAccountNonLocked(true);
-                    userEntity.setLoginAttempts(0);
-                    userEntity.setLastLogin(now());
-                } else {
-                    throw new ApiException("Your account is locked on 15 minutes");
-                }
+                userEntity.setAccountNonLocked(true);
+                userEntity.setLoginAttempts(0);
+                userEntity.setLastLogin(now());
             }
         }
         userRepository.save(userEntity);
     }
-
+    
     @Override
     public UserDto getUserByUserId(String userId) {
         var userEntity = userRepository.findUserByUserId(userId).orElseThrow(() -> new ApiException("User not found"));
@@ -327,9 +325,5 @@ public class UserServiceImpl implements UserService {
     private UserEntity getUserEntityByEmail(String email) {
         var userByEmail = userRepository.findByEmailIgnoreCase(email);
         return userByEmail.orElseThrow(() -> new ApiException("User by email is not found"));
-    }
-    private UserEntity getUserEntityByOtpCode(String otp) {
-        var userByEmail = userRepository.findUserByOtpCode(otp);
-        return userByEmail.orElseThrow(() -> new ApiException("User by otp is not found"));
     }
 }

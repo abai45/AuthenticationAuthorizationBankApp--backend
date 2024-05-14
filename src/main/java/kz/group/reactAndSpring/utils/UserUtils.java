@@ -7,6 +7,7 @@ import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.repository.UserRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.util.Random;
@@ -39,12 +40,13 @@ public class UserUtils {
                 .lastName(lastName)
                 .email(email)
                 .lastLogin(now())
+                .tokenCreatedAt(now())
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .mfa(false)
                 .enabled(false)
                 .loginAttempts(0)
-                .otpCode(otpCode) // Используем сгенерированный OTP-код
+                .otpCode(otpCode)
                 .phone(EMPTY)
                 .imgUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
                 .roles(role)

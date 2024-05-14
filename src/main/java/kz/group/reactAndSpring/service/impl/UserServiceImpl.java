@@ -1,6 +1,7 @@
 package kz.group.reactAndSpring.service.impl;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import kz.group.reactAndSpring.domain.RequestContext;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.entity.ConfirmationEntity;
@@ -39,7 +40,6 @@ import static kz.group.reactAndSpring.utils.UserUtils.*;
 import static kz.group.reactAndSpring.validation.UserValidation.verifyAccountStatus;
 
 @Service
-@Transactional(rollbackOn = Exception.class)
 @RequiredArgsConstructor
 @Slf4j
 public class UserServiceImpl implements UserService {
@@ -193,12 +193,17 @@ public class UserServiceImpl implements UserService {
     @Override
     public void verifyOtpCode(String email,String otpCode) {
         var user = getUserEntityByEmail(email);
-        if(!user.getOtpCode().equals(otpCode)) {
+        if(!otpCode.equals(user.getOtpCode())) {
             throw new ApiException("Incorrect OTP code");
+        }
+        if(user.getTokenCreatedAt() != null && user.getTokenCreatedAt().plusMinutes(10).isBefore(now())) {
+            sendOtpCodeMessage(user.getEmail());
+            throw new ApiException("OTP code validation timed out. Please check your email and try again.");
         }
         var confirmationEntity = getUserConfirmation(user);
         user.setEnabled(true);
         user.setOtpCode(null);
+        user.setTokenCreatedAt(null);
         userRepository.save(user);
         confirmationRepository.delete(confirmationEntity);
     }
@@ -218,13 +223,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto userOtpVerify(String email, String otpCode) {
         var userEntity = getUserEntityByEmail(email);
-        if (!userEntity.getOtpCode().equals(otpCode)) {
+        if (!otpCode.equals(userEntity.getOtpCode())) {
             throw new ApiException("OTP code is not correct");
         }
+        if(userEntity.getTokenCreatedAt()!=null && userEntity.getTokenCreatedAt().plusMinutes(1).isBefore(now())) {
+            sendOtpCodeMessage(email);
+            throw new ApiException("OTP code validation timed out. Please try again.");
+        }
         userEntity.setOtpCode(null);
+        userEntity.setTokenCreatedAt(null);
         userRepository.save(userEntity);
         return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
     }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void sendOtpCodeMessage(String email) {
+        var user = getUserEntityByEmail(email);
+        var otpCode = generateOtpCode();
+        user.setOtpCode(otpCode);
+        user.setTokenCreatedAt(now());
+        userRepository.save(user);
+        emailService.sendOtpMessageHtmlPage(user.getFirstName(), email, otpCode);
+    }
+
     @Override
     public void deleteUser(String email) {
         var user = getUserEntityByEmail(email);
@@ -232,22 +254,6 @@ public class UserServiceImpl implements UserService {
             throw new ApiException("User not found");
         }
         userRepository.delete(user);
-    }
-
-    @Override
-    public void saveOtpCode(String email, String otpCode) {
-        var user = getUserEntityByEmail(email);
-        user.setOtpCode(otpCode);
-        userRepository.save(user);
-    }
-
-    @Override
-    public void resendOtpCode(String email) {
-        var user = getUserEntityByEmail(email);
-        String otpCode = generateOtpCode();
-        user.setOtpCode(otpCode);
-        userRepository.save(user);
-        emailService.sendOtpMessageHtmlPage(user.getFirstName(), email, otpCode);
     }
 
     @Override

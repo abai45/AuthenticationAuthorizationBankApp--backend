@@ -28,6 +28,7 @@ public class UserEntity extends Autitable{
     private Integer loginAttempts;
     private LocalDateTime lastLogin;
     private LocalDateTime lockTime;
+    private LocalDateTime tokenCreatedAt;
     private String phone;
     private String imgUrl;
     private boolean accountNonExpired;

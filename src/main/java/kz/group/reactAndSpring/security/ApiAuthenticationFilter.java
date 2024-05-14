@@ -23,8 +23,10 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
+import static java.time.LocalDateTime.now;
 import static kz.group.reactAndSpring.constant.Constants.LOGIN_PATH;
 import static kz.group.reactAndSpring.domain.ApiAuthentication.unauthenticated;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_ATTEMPT;
@@ -77,8 +79,8 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     private void sendResponse(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
-        String accessToken = jwtService.createToken(user, Token::getAccess_token);
-        String refreshToken = jwtService.createToken(user, Token::getRefresh_token);
+        var accessToken = jwtService.createToken(user, Token::getAccess_token);
+        var refreshToken = jwtService.createToken(user, Token::getRefresh_token);
         UserTokenResponseDto userTokenResponseDto = new UserTokenResponseDto();
         userTokenResponseDto.setAccessToken(accessToken);
         userTokenResponseDto.setRefreshToken(refreshToken);
@@ -91,15 +93,10 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     private void sendOtpCode(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
-        String otpCode = generateOtpCode();
-        userService.saveOtpCode(user.getEmail(), otpCode);
-//        String message = "Your OTP code for two-factor authentication is:" + otpCode;
-//        emailService.sendOtpMessage(user.getEmail(), message);
-        emailService.sendOtpMessageHtmlPage(user.getFirstName(),user.getEmail(), otpCode);
+        userService.sendOtpCodeMessage(user.getEmail());
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
         ObjectMapper mapper = new ObjectMapper();
         mapper.writeValue(response.getOutputStream(), user);
     }
-
 }

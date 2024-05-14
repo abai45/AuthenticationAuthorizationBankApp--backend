@@ -8,6 +8,8 @@ import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.enumeration.LoginType;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+
 public interface UserService {
     void createUser(String firstName, String lastName, String email, String password);
     RoleEntity getRoleName(String name);
@@ -22,8 +24,7 @@ public interface UserService {
     void updatePassword(String userId, String newPassword, String confirmNewPassword);
     void verifyOtpCode(String email, String otpCode);
     UserDto setMfa(Long id);
-    void resendOtpCode(String email);
-    void saveOtpCode(String email, String otpCode);
+    void sendOtpCodeMessage(String email);
     UserDto userOtpVerify(String email, String otpCode);
     UserDto updateUser(String userId, String firstName, String lastName, String email, String phone);
     void updateRole(String userId, String role);

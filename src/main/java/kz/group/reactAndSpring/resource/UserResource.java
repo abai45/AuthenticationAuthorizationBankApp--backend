@@ -4,16 +4,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.*;
-import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.service.TokenService;
-import kz.group.reactAndSpring.service.TransactionService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 
 import java.io.IOException;
 import java.net.URI;
@@ -35,7 +32,6 @@ import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 public class UserResource {
     private final UserService userService;
     private final TokenService tokenService;
-    private final TransactionService transactionService;
 
     @PostMapping("/register")
     public ResponseEntity<UserTokenResponseDto> saveUser(@RequestBody @Valid UserRequestDto user, HttpServletRequest request) {
@@ -58,19 +54,15 @@ public class UserResource {
 
     @PostMapping("/resendotp")
     public ResponseEntity<Response> resendOtp(@RequestBody @Valid EmailRequestDto emailRequestDto, HttpServletRequest request) {
-        userService.resendOtpCode(emailRequestDto.getEmail());
+        userService.sendOtpCodeMessage(emailRequestDto.getEmail());
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "We send new OTP code to email", OK));
     }
 
     @PostMapping("/login/otp")
     public ResponseEntity<UserTokenResponseDto> verifyOtp(@RequestBody @Valid OtpCodeRequestDto otpRequest, HttpServletRequest request) {
         var user = userService.userOtpVerify(otpRequest.getEmail(), otpRequest.getOtpCode());
-        if (user != null) {
-            UserTokenResponseDto tokenResponse = tokenService.generateTokens(user);
-            return ResponseEntity.ok().body(tokenResponse);
-        } else {
-            return ResponseEntity.status(UNAUTHORIZED).build();
-        }
+        UserTokenResponseDto tokenResponse = tokenService.generateTokens(user);
+        return ResponseEntity.ok().body(tokenResponse);
     }
 
     @PostMapping("/verify/account/otp")

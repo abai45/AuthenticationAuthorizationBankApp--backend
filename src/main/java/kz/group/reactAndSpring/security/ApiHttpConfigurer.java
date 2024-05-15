@@ -17,7 +17,6 @@ public class ApiHttpConfigurer extends AbstractHttpConfigurer<ApiHttpConfigurer,
     private final ApiAuthenticationProvider apiAuthenticationProvider;
     private final UserService userService;
     private final JwtService jwtService;
-    private final EmailService emailService;
     private final AuthenticationConfiguration authenticationConfiguration;
 
     @Override
@@ -28,6 +27,6 @@ public class ApiHttpConfigurer extends AbstractHttpConfigurer<ApiHttpConfigurer,
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAfter(new ApiAuthenticationFilter(authenticationConfiguration.getAuthenticationManager(), jwtService, userService, emailService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(new ApiAuthenticationFilter(authenticationConfiguration.getAuthenticationManager(), jwtService, userService), UsernamePasswordAuthenticationFilter.class);
     }
 }

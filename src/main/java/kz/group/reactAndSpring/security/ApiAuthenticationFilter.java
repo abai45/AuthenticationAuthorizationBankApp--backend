@@ -42,13 +42,11 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     private final JwtService jwtService;
     private final UserService userService;
-    private final EmailService emailService;
 
-    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, EmailService emailService) {
+    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
         super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()));
         this.jwtService = jwtService;
         this.userService = userService;
-        this.emailService = emailService;
         setAuthenticationManager(authenticationManager);
     }
 

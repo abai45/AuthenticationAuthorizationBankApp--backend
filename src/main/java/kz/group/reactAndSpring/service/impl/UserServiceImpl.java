@@ -29,11 +29,13 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static java.time.LocalDateTime.now;
+import static java.util.stream.Collectors.toList;
 import static kz.group.reactAndSpring.constant.Constants.IMAGE_DIRECTORY;
 import static kz.group.reactAndSpring.enumeration.EventType.RESETPASSWORD;
 import static kz.group.reactAndSpring.utils.UserUtils.*;
@@ -50,6 +52,7 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final BCryptPasswordEncoder encoder;
     private final ApplicationEventPublisher publisher;
+
     @Override
     public void createUser(String firstName, String lastName, String email, String password) {
         var userEntity = userRepository.save(createNewUser(firstName, lastName, email));
@@ -59,6 +62,7 @@ public class UserServiceImpl implements UserService {
         confirmationRepository.save(confirmationEntity);
         publisher.publishEvent(new UserEvent(userEntity, EventType.REGISTRATION, Map.of("key", confirmationEntity.getKey())));
     }
+
     private UserEntity createNewUser(String firstName, String lastName, String email) {
         var role = getRoleName(AuthorityEnum.USER.name());
         return createUserEntity(firstName,lastName,email,role);
@@ -226,7 +230,7 @@ public class UserServiceImpl implements UserService {
         if (!otpCode.equals(userEntity.getOtpCode())) {
             throw new ApiException("OTP code is not correct");
         }
-        if(userEntity.getTokenCreatedAt()!=null && userEntity.getTokenCreatedAt().plusMinutes(1).isBefore(now())) {
+        if(userEntity.getTokenCreatedAt()!=null && userEntity.getTokenCreatedAt().plusMinutes(5).isBefore(now())) {
             sendOtpCodeMessage(email);
             throw new ApiException("OTP code validation timed out. Please try again.");
         }
@@ -254,6 +258,15 @@ public class UserServiceImpl implements UserService {
             throw new ApiException("User not found");
         }
         userRepository.delete(user);
+    }
+
+    @Override
+    public List<UserDto> getUsers() {
+        return userRepository.findAll()
+                .stream()
+                .filter(userEntity -> !"system@gmail.com".equalsIgnoreCase(userEntity.getEmail()))
+                .map(userEntity -> fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId())))
+                .collect(toList());
     }
 
     @Override

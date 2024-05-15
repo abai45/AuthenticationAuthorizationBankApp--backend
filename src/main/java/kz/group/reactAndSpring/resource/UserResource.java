@@ -8,6 +8,7 @@ import kz.group.reactAndSpring.service.TokenService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -40,6 +41,14 @@ public class UserResource {
         UserTokenResponseDto tokenResponse = tokenService.generateTokens(newUser);
         return ResponseEntity.created(getUri()).body(tokenResponse);
     }
+
+    @PostMapping("/login/otp")
+    public ResponseEntity<UserTokenResponseDto> verifyOtp(@RequestBody @Valid OtpCodeRequestDto otpRequest, HttpServletRequest request) {
+        var user = userService.userOtpVerify(otpRequest.getEmail(), otpRequest.getOtpCode());
+        UserTokenResponseDto tokenResponse = tokenService.generateTokens(user);
+        return ResponseEntity.ok().body(tokenResponse);
+    }
+
     @PatchMapping("/mfa/set")
     public ResponseEntity<Response> setMfa(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
         var user = userService.setMfa(userPrincipal.getId());
@@ -58,13 +67,6 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request, emptyMap(), "We send new OTP code to email", OK));
     }
 
-    @PostMapping("/login/otp")
-    public ResponseEntity<UserTokenResponseDto> verifyOtp(@RequestBody @Valid OtpCodeRequestDto otpRequest, HttpServletRequest request) {
-        var user = userService.userOtpVerify(otpRequest.getEmail(), otpRequest.getOtpCode());
-        UserTokenResponseDto tokenResponse = tokenService.generateTokens(user);
-        return ResponseEntity.ok().body(tokenResponse);
-    }
-
     @PostMapping("/verify/account/otp")
     public ResponseEntity<Response> verifyOtpAccount(@RequestBody @Valid OtpCodeRequestDto otpCodeRequest, HttpServletRequest request) {
         userService.verifyOtpCode(otpCodeRequest.getEmail(), otpCodeRequest.getOtpCode());
@@ -72,6 +74,7 @@ public class UserResource {
     }
 
     @PatchMapping("/updatepassword")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> updatePassword(@AuthenticationPrincipal UserDto user, @RequestBody UpdatePasswordRequest passwordRequest, HttpServletRequest request) {
         userService.updatePassword(user.getUserId(), passwordRequest.getPassword(), passwordRequest.getNewPassword(), passwordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password updated successfully", OK));
@@ -94,27 +97,36 @@ public class UserResource {
         userService.updatePassword(resetPasswordRequest.getUserId(), resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password reset successfully", OK));
     }
+    @GetMapping("/list")
+    @PreAuthorize("hasAnyAuthority('user:read') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    public ResponseEntity<Response> getUsers(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        return ResponseEntity.ok().body(getResponse(request,Map.of("users",userService.getUsers()), "Users list retrieved", OK));
+    }
 
     //Profile
     @GetMapping("/profile")
+    @PreAuthorize("hasAnyAuthority('user:read') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> profile(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
         var user = userService.getUserByUserId(userPrincipal.getUserId());
         return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "Profile retrieved", OK));
     }
 
     @PatchMapping("/update")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> update(@AuthenticationPrincipal UserDto userPrincipal, @RequestBody UserRequestDto userRequest, HttpServletRequest request) {
         var user = userService.updateUser(userPrincipal.getUserId(), userRequest.getFirstName(), userRequest.getLastName(), userRequest.getEmail(), userRequest.getPhone());
         return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "User updated successfully", OK));
     }
 
     @PatchMapping("/updaterole")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> updateRole(@AuthenticationPrincipal UserDto userPrincipal, @RequestBody RoleRequestDto roleRequest, HttpServletRequest request) {
         userService.updateRole(userPrincipal.getUserId(), roleRequest.getRole());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Role updated successfully", OK));
     }
 
     @PatchMapping("/photo")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> uploadPhoto(@AuthenticationPrincipal UserDto user, @RequestParam("file") MultipartFile file, HttpServletRequest request) {
         var imageUrl = userService.uploadPhoto(user.getUserId(), file);
         return ResponseEntity.ok().body(getResponse(request,Map.of("imageUrl", imageUrl), "Photo updated successfully", OK));
@@ -126,18 +138,21 @@ public class UserResource {
     }
 
     @PatchMapping("/toggleaccountexpired")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountExpired(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         userService.toggleAccountExpired(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
 
     @PatchMapping("/toggleaccountlocked")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountLocked(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         userService.toggleAccountLocked(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
 
     @PatchMapping("/toggleaccountenabled")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> toggleAccountEnabled(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         userService.toggleAccountEnabled(user.getUserId());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
@@ -151,6 +166,7 @@ public class UserResource {
 //    }
 
     @PostMapping("/delete")
+    @PreAuthorize("hasAnyAuthority('user:delete') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
         userService.deleteUser(emailRequest.getEmail());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "User was deleted successfully", OK));

@@ -9,6 +9,7 @@ import kz.group.reactAndSpring.enumeration.LoginType;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public interface UserService {
     void createUser(String firstName, String lastName, String email, String password);
@@ -34,4 +35,6 @@ public interface UserService {
     void toggleAccountExpired(String userId);
     void toggleAccountLocked(String userId);
     void toggleAccountEnabled(String userId);
+
+    List<UserDto> getUsers();
 }

@@ -13,9 +13,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -39,7 +41,10 @@ public class TransactionServiceImpl implements TransactionService {
     public Collection<TransactionDto> getTransactions(String userId) {
         Optional<UserEntity> userEntity = userRepository.findUserByUserId(userId);
         List<TransactionEntity> transactionEntities = transactionRepository.getTransactionEntitiesByOwner(userEntity.orElse(null));
-           
+        List<TransactionDto> transactionDtos = transactionEntities.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return transactionDtos;
     }
 
     private TransactionDto convertToDto(TransactionEntity transactionEntity) {

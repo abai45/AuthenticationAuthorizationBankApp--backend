@@ -59,26 +59,6 @@ CREATE TABLE IF NOT EXISTS credentials (
                                            CONSTRAINT fk_credentials_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS documents (
-                                         id SERIAL PRIMARY KEY,
-                                         document_id CHARACTER VARYING(255) NOT NULL,
-                                         reference_id CHARACTER VARYING(255) NOT NULL,
-                                         extension CHARACTER VARYING(10) NOT NULL,
-                                         formatted_size CHARACTER VARYING(20) NOT NULL,
-                                         icon CHARACTER VARYING(255) NOT NULL,
-                                         name CHARACTER VARYING(50) NOT NULL,
-                                         size BIGINT NOT NULL,
-                                         uri CHARACTER VARYING(255) NOT NULL,
-                                         description CHARACTER VARYING(255),
-                                         created_by BIGINT NOT NULL,
-                                         updated_by BIGINT NOT NULL,
-                                         created_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                                         updated_at TIMESTAMP(6) WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-                                         CONSTRAINT uq_documents_document_id UNIQUE (document_id),
-                                         CONSTRAINT fk_documents_created_by FOREIGN KEY (created_by) REFERENCES users (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT,
-                                         CONSTRAINT fk_documents_updated_by FOREIGN KEY (updated_by) REFERENCES users (id) MATCH SIMPLE ON UPDATE CASCADE ON DELETE RESTRICT
-);
-
 CREATE TABLE IF NOT EXISTS roles (
                                      id SERIAL PRIMARY KEY,
                                      authorities CHARACTER VARYING(255) NOT NULL,

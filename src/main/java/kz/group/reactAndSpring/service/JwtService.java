@@ -32,8 +32,8 @@ import java.util.function.Function;
 
 public interface JwtService {
     String createToken(UserDto user, Function<Token,String> tokenFunction);
-    Optional<String> extractToken(HttpServletRequest request, String headerName);
-    void addHeader(HttpServletResponse response, UserDto user, TokenType type, String headerName);
+//    Optional<String> extractToken(HttpServletRequest request, String headerName);
+//    void addHeader(HttpServletResponse response, UserDto user, TokenType type, String headerName);
     <T> T getTokenData(String token, Function<TokenData, T> tokenFunction);
-    void removeHeader(HttpServletResponse response, String headerName);
+//    void removeHeader(HttpServletResponse response, String headerName);
 }

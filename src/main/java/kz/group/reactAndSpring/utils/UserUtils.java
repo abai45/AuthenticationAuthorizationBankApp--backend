@@ -28,7 +28,7 @@ public class UserUtils {
         this.userRepository = userRepository;
     }
 
-    public static UserEntity createUserEntity(String firstName, String lastName, String email, RoleEntity role) {
+    public static UserEntity createUserEntity(String firstName, String lastName, String email, String phone,RoleEntity role) {
         String otpCode;
         do {
             otpCode = generateOtpCode();
@@ -47,7 +47,7 @@ public class UserUtils {
                 .enabled(false)
                 .loginAttempts(0)
                 .otpCode(otpCode)
-                .phone(EMPTY)
+                .phone(phone)
                 .imgUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
                 .roles(role)
                 .build();
@@ -66,6 +66,7 @@ public class UserUtils {
     }
 
     private static boolean isOtpCodeExists(String otpCode) {
+
         return userRepository.existsByOtpCode(otpCode);
     }
 

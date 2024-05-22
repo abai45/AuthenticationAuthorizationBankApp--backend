@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface UserService {
-    void createUser(String firstName, String lastName, String email, String password);
+    void createUser(String firstName, String lastName, String email, String password, String phone);
     RoleEntity getRoleName(String name);
     UserDto verifyAccountKey(String key);
     void updateLoginAttempt(String email, LoginType loginType);

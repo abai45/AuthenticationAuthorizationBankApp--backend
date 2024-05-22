@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
@@ -29,6 +30,10 @@ public class UserEntity extends Autitable{
     private LocalDateTime lastLogin;
     private LocalDateTime lockTime;
     private LocalDateTime tokenCreatedAt;
+    private BigDecimal balance;
+    private BigDecimal transactionLimit;
+    private BigDecimal bonuses;
+    @Column(unique = true, nullable = false)
     private String phone;
     private String imgUrl;
     private boolean accountNonExpired;

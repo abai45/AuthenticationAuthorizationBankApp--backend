@@ -24,9 +24,9 @@ public class TransactionEntity extends Autitable{
     private String transactionType;
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
-            name="user_id",
+            name = "user_id",
             referencedColumnName = "id",
-            foreignKey = @ForeignKey(name = "fk_transaction_owner", foreignKeyDefinition = "foreign key /* FK */ references UserEntity", value = ConstraintMode.CONSTRAINT)
+            foreignKey = @ForeignKey(name = "fk_transaction_owner")
     )
     private UserEntity owner;
     private LocalDateTime transactionDate;

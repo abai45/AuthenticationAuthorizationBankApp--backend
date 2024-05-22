@@ -35,9 +35,7 @@ import static org.springframework.security.core.authority.AuthorityUtils.commaSe
 @Slf4j
 public class JwtServiceImpl extends JwtConfiguration implements JwtService {
     private final UserService userService;
-
     private final Supplier<SecretKey> key = () -> Keys.hmacShaKeyFor(Decoders.BASE64.decode(getSecret()));
-
 
     private final Function<String, Claims> claimsFunction = token ->
             Jwts.parser()
@@ -50,13 +48,8 @@ public class JwtServiceImpl extends JwtConfiguration implements JwtService {
         return claimsFunction.andThen(claims).apply(token);
     }
 
-    public Function<String, List<GrantedAuthority>> authorities = token ->
-            commaSeparatedStringToAuthorityList(new StringJoiner(AUTHORITY_DELIMITER)
-                    .add(claimsFunction.apply(token).get(AUTHORITIES, String.class))
-                    .add(ROLE_PREFIX + claimsFunction.apply(token).get(ROLE, String.class)).toString());
-
-
-    private final Function<String, String> subject = token -> getClaimsValue(token, Claims::getSubject);
+    private final Function<String, String> subject = token ->
+            getClaimsValue(token, Claims::getSubject);
 
     private final Supplier<JwtBuilder> builder = () ->
             Jwts.builder()
@@ -87,18 +80,6 @@ public class JwtServiceImpl extends JwtConfiguration implements JwtService {
     }
 
     @Override
-    public Optional<String> extractToken(HttpServletRequest request, String headerName) {
-        String token = request.getHeader(headerName);
-        return Optional.ofNullable(token);
-    }
-
-    @Override
-    public void addHeader(HttpServletResponse response, UserDto user, TokenType type, String headerName) {
-        String tokenValue = createToken(user, token -> type == TokenType.ACCESS ? token.getAccess_token() : token.getRefresh_token());
-        response.setHeader(headerName, tokenValue);
-    }
-
-    @Override
     public <T> T getTokenData(String token, Function<TokenData, T> tokenFunction) {
         return tokenFunction.apply(
                 TokenData.builder()
@@ -111,9 +92,25 @@ public class JwtServiceImpl extends JwtConfiguration implements JwtService {
                         .build());
     }
 
-    @Override
-    public void removeHeader(HttpServletResponse response, String headerName) {
-        response.setHeader(headerName, "");
-    }
+//    @Override
+//    public void removeHeader(HttpServletResponse response, String headerName) {
+//        response.setHeader(headerName, "");
+//    }
+//
+//    @Override
+//    public Optional<String> extractToken(HttpServletRequest request, String headerName) {
+//        String token = request.getHeader(headerName);
+//        return Optional.ofNullable(token);
+//    }
+//
+//    @Override
+//    public void addHeader(HttpServletResponse response, UserDto user, TokenType type, String headerName) {
+//        String tokenValue = createToken(user, token -> type == TokenType.ACCESS ? token.getAccess_token() : token.getRefresh_token());
+//        response.setHeader(headerName, tokenValue);
+//    }
+//public Function<String, List<GrantedAuthority>> authorities = token ->
+//        commaSeparatedStringToAuthorityList(new StringJoiner(AUTHORITY_DELIMITER)
+//                .add(claimsFunction.apply(token).get(AUTHORITIES, String.class))
+//                .add(ROLE_PREFIX + claimsFunction.apply(token).get(ROLE, String.class)).toString());
 }
 

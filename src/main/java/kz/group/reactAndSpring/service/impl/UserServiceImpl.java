@@ -54,8 +54,8 @@ public class UserServiceImpl implements UserService {
     private final ApplicationEventPublisher publisher;
 
     @Override
-    public void createUser(String firstName, String lastName, String email, String password) {
-        var userEntity = userRepository.save(createNewUser(firstName, lastName, email));
+    public void createUser(String firstName, String lastName, String email, String password, String phone) {
+        var userEntity = userRepository.save(createNewUser(firstName, lastName, email, phone));
         var credentialEntity = new CredentialEntity(userEntity, encoder.encode(password));
         credentialRepository.save(credentialEntity);
         var confirmationEntity = new ConfirmationEntity(userEntity);
@@ -63,9 +63,9 @@ public class UserServiceImpl implements UserService {
         publisher.publishEvent(new UserEvent(userEntity, EventType.REGISTRATION, Map.of("key", confirmationEntity.getKey())));
     }
 
-    private UserEntity createNewUser(String firstName, String lastName, String email) {
+    private UserEntity createNewUser(String firstName, String lastName, String email, String phone) {
         var role = getRoleName(AuthorityEnum.USER.name());
-        return createUserEntity(firstName,lastName,email,role);
+        return createUserEntity(firstName,lastName,email, phone, role);
     }
     @Override
     public RoleEntity getRoleName(String name) {

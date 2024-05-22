@@ -36,7 +36,7 @@ public class UserResource {
 
     @PostMapping("/register")
     public ResponseEntity<UserTokenResponseDto> saveUser(@RequestBody @Valid UserRequestDto user, HttpServletRequest request) {
-        userService.createUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword());
+        userService.createUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword(),user.getPhone());
         UserDto newUser = userService.getUserByEmail(user.getEmail());
         UserTokenResponseDto tokenResponse = tokenService.generateTokens(newUser);
         return ResponseEntity.created(getUri()).body(tokenResponse);
@@ -50,6 +50,7 @@ public class UserResource {
     }
 
     @PatchMapping("/mfa/set")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('USER','ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> setMfa(@AuthenticationPrincipal UserDto userPrincipal, HttpServletRequest request) {
         var user = userService.setMfa(userPrincipal.getId());
         return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "MFA is changed successfully", OK));
@@ -74,12 +75,13 @@ public class UserResource {
     }
 
     @PatchMapping("/updatepassword")
-    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('USER','ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> updatePassword(@AuthenticationPrincipal UserDto user, @RequestBody UpdatePasswordRequest passwordRequest, HttpServletRequest request) {
         userService.updatePassword(user.getUserId(), passwordRequest.getPassword(), passwordRequest.getNewPassword(), passwordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password updated successfully", OK));
     }
 
+    //forgot pass
     @PostMapping("/resetpassword")
     public ResponseEntity<Response> resetPassword(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
         userService.resetPassword(emailRequest.getEmail());
@@ -112,7 +114,7 @@ public class UserResource {
     }
 
     @PatchMapping("/update")
-    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('USER','ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> update(@AuthenticationPrincipal UserDto userPrincipal, @RequestBody UserRequestDto userRequest, HttpServletRequest request) {
         var user = userService.updateUser(userPrincipal.getUserId(), userRequest.getFirstName(), userRequest.getLastName(), userRequest.getEmail(), userRequest.getPhone());
         return ResponseEntity.ok().body(getResponse(request,Map.of("user",user), "User updated successfully", OK));
@@ -126,7 +128,7 @@ public class UserResource {
     }
 
     @PatchMapping("/photo")
-    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('user:update') or hasAnyRole('USER','ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> uploadPhoto(@AuthenticationPrincipal UserDto user, @RequestParam("file") MultipartFile file, HttpServletRequest request) {
         var imageUrl = userService.uploadPhoto(user.getUserId(), file);
         return ResponseEntity.ok().body(getResponse(request,Map.of("imageUrl", imageUrl), "Photo updated successfully", OK));
@@ -158,15 +160,7 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Account updated successfully", OK));
     }
 
-    //Transaction
-//    @PostMapping("/credit")
-//    public ResponseEntity<Response> creditTransaction(@AuthenticationPrincipal UserDto user, TransactionRequestDto transactionRequest, HttpServletRequest request) {
-//        transactionService.creditTransaction(transactionRequest.getSourcePhone(), transactionRequest.getDestPhone(), transactionRequest.getAmount());
-//        return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Credit transaction successfully", OK));
-//    }
-
     @PostMapping("/delete")
-    @PreAuthorize("hasAnyAuthority('user:delete') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> deleteUser(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {
         userService.deleteUser(emailRequest.getEmail());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "User was deleted successfully", OK));

@@ -1,12 +1,12 @@
 package kz.group.reactAndSpring.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_DEFAULT;
 
@@ -51,4 +51,6 @@ public class UserEntity extends Autitable{
                     name = "role_id",
                     referencedColumnName = "id"))
     private RoleEntity roles;
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BankCardEntity> bankCards;
 }

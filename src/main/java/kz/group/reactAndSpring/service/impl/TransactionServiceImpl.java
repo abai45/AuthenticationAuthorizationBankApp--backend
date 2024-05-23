@@ -1,7 +1,7 @@
 package kz.group.reactAndSpring.service.impl;
 
 import jakarta.transaction.Transactional;
-import kz.group.reactAndSpring.dto.transaction.TransactionDto;
+import kz.group.reactAndSpring.dto.bankDto.TransactionDto;
 import kz.group.reactAndSpring.entity.TransactionEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.exception.ApiException;

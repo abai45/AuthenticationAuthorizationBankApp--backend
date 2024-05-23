@@ -1,6 +1,6 @@
 package kz.group.reactAndSpring.service;
 
-import kz.group.reactAndSpring.dto.transaction.TransactionDto;
+import kz.group.reactAndSpring.dto.bankDto.TransactionDto;
 
 import java.util.Collection;
 

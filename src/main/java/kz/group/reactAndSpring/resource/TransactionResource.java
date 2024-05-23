@@ -2,9 +2,9 @@ package kz.group.reactAndSpring.resource;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kz.group.reactAndSpring.domain.Response;
-import kz.group.reactAndSpring.dto.transaction.CreditDebitRequestDto;
-import kz.group.reactAndSpring.dto.transaction.TransactionId;
-import kz.group.reactAndSpring.dto.transaction.TransferRequestDto;
+import kz.group.reactAndSpring.dto.bankDto.CreditDebitRequestDto;
+import kz.group.reactAndSpring.dto.bankDto.TransactionId;
+import kz.group.reactAndSpring.dto.bankDto.TransferRequestDto;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.service.TransactionService;
 import lombok.RequiredArgsConstructor;
@@ -60,10 +60,10 @@ public class TransactionResource {
         return ResponseEntity.ok(getResponse(request, Map.of("transactions", transactions), "Get transactions", OK));
     }
 
-    @GetMapping("/filterdate")
-    @PreAuthorize("hasAnyAuthority('transaction:read') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<Response> getTransactionsFilterDate(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
-        var transactions = transactionService.getTransactionsFilterDate(user.getUserId());
-        return ResponseEntity.ok(getResponse(request, Map.of("transactions", transactions), "Get transactions", OK));
-    }
+//    @GetMapping("/filterdate")
+//    @PreAuthorize("hasAnyAuthority('transaction:read') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
+//    public ResponseEntity<Response> getTransactionsFilterDate(@AuthenticationPrincipal UserDto user,@RequestBody Date, HttpServletRequest request) {
+//        var transactions = transactionService.getTransactionsFilterDate(user.getUserId());
+//        return ResponseEntity.ok(getResponse(request, Map.of("transactions", transactions), "Get transactions", OK));
+//    }
 }

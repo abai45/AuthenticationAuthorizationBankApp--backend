@@ -1,4 +1,4 @@
-package kz.group.reactAndSpring.dto.transaction;
+package kz.group.reactAndSpring.dto.bankDto;
 
 import lombok.*;
 

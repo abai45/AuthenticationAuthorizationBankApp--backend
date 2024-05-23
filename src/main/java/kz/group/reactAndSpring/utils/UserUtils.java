@@ -7,16 +7,15 @@ import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.repository.UserRepository;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.Random;
 import java.util.UUID;
 
 import static java.time.LocalDateTime.now;
 import static kz.group.reactAndSpring.constant.Constants.NINETY_DAYS;
 import static kz.group.reactAndSpring.constant.Constants.OTP_LENGTH;
-import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 @Component
 public class UserUtils {
@@ -50,6 +49,8 @@ public class UserUtils {
                 .phone(phone)
                 .imgUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
                 .roles(role)
+                .balance(BigDecimal.ZERO)
+                .transactionLimit(new BigDecimal(25000))
                 .build();
     }
 

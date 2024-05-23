@@ -1,7 +1,5 @@
-package kz.group.reactAndSpring.dto;
+package kz.group.reactAndSpring.dto.transaction;
 
-import jakarta.persistence.*;
-import kz.group.reactAndSpring.entity.UserEntity;
 import lombok.*;
 
 import java.math.BigDecimal;

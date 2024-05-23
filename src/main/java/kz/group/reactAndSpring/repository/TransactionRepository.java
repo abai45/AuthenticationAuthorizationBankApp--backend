@@ -10,7 +10,7 @@ import java.util.Optional;
 
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Long> {
-    Optional<TransactionEntity> findByOwner(UserEntity userId);
-    List<TransactionEntity> getTransactionEntitiesByOwner(UserEntity userEntity);
+    List<TransactionEntity> getTransactionEntitiesBySourceUser(UserEntity userEntity);
     List<TransactionEntity> getTransactionEntitiesByStatus(String status);
+    TransactionEntity findByTransactionId(String transactionId);
 }

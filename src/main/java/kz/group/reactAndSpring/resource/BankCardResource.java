@@ -3,6 +3,7 @@ package kz.group.reactAndSpring.resource;
 import jakarta.servlet.http.HttpServletRequest;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.UserDto;
+import kz.group.reactAndSpring.dto.bankDto.BankCardDto;
 import kz.group.reactAndSpring.dto.bankDto.BankCardNameRequestDto;
 import kz.group.reactAndSpring.service.BankCardService;
 import lombok.RequiredArgsConstructor;
@@ -34,5 +35,11 @@ public class BankCardResource {
     public ResponseEntity<Response> listCards(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         var cards = bankCardService.getBankCard(user);
         return ResponseEntity.ok(getResponse(request, Map.of("cards", cards), "Bank cards retrieved successfully", OK));
+    }
+
+    @PostMapping("/getfull")
+    public ResponseEntity<Response> getFullCard(@AuthenticationPrincipal UserDto user, @RequestBody BankCardNameRequestDto bankCardNameRequest, HttpServletRequest request) {
+        var card = bankCardService.getFullCardInfo(user, bankCardNameRequest.getCardName());
+        return ResponseEntity.ok(getResponse(request, Map.of("card", card), "Full info of your card retrieved successfully", OK));
     }
 }

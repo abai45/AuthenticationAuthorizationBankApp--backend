@@ -1,5 +1,6 @@
 package kz.group.reactAndSpring.utils;
 
+import kz.group.reactAndSpring.dto.bankDto.BankCardDto;
 import kz.group.reactAndSpring.entity.BankCardEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.repository.BankCardRepository;
@@ -20,16 +21,17 @@ public class BankCardUtils {
     private static EncryptionService encryptionService;
 
     @Autowired
-    public BankCardUtils(BankCardRepository bankCardRepository) {
+    public BankCardUtils(BankCardRepository bankCardRepository, EncryptionService encryptionService) {
         this.bankCardRepository = bankCardRepository;
+        this.encryptionService = encryptionService;
     }
 
     public static BankCardEntity createBankCardEntity(UserEntity owner,String cardName) {
-        String cardNumber = encryptionService.encrypt(generateCardNumber());
+        String cardNumber = generateCardNumber();
         String last4Digits= cardNumber.substring(15);
         String cvv = encryptionService.encrypt(generateCVV());
         return BankCardEntity.builder()
-                .cardNumber(cardNumber)
+                .cardNumber(encryptionService.encrypt(cardNumber))
                 .last4Digits(last4Digits)
                 .cardHolderName(owner.getFirstName()+" "+owner.getLastName())
                 .cardExpiryDate(generateExpityDate())
@@ -37,6 +39,15 @@ public class BankCardUtils {
                 .owner(owner)
                 .cardName(cardName)
                 .build();
+    }
+
+    public static BankCardDto fromBankCardEntity(BankCardEntity bankCard) {
+        BankCardDto bankCardDto = new BankCardDto();
+        bankCardDto.setLast4Digits(bankCard.getLast4Digits());
+        bankCardDto.setCardHolderName(bankCard.getCardHolderName());
+        bankCardDto.setCardName(bankCard.getCardName());
+        bankCardDto.setCardExpiryDate(bankCard.getCardExpiryDate());
+        return bankCardDto;
     }
 
     private static String generateCardNumber() {

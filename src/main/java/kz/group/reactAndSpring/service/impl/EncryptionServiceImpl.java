@@ -1,6 +1,8 @@
 package kz.group.reactAndSpring.service.impl;
 
 import kz.group.reactAndSpring.service.EncryptionService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Cipher;
@@ -9,9 +11,11 @@ import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class EncryptionServiceImpl implements EncryptionService {
     private static final String ALGORITHM = "AES";
-    private static final byte[] KEY = "Encryption Key for test".getBytes();
+    private static final byte[] KEY = "1234567890123456".getBytes();
 
     @Override
     public String encrypt(String data) {
@@ -22,7 +26,8 @@ public class EncryptionServiceImpl implements EncryptionService {
             byte[] encrypted = cipher.doFinal(data.getBytes());
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            throw new RuntimeException("Encryption Failed");
+            log.error("Encryption failed for data: {}", data, e);
+            throw new RuntimeException("Encryption Failed", e);
         }
     }
 
@@ -35,7 +40,8 @@ public class EncryptionServiceImpl implements EncryptionService {
             byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
             return new String(decrypted);
         } catch (Exception e) {
-            throw new RuntimeException("Decryption Failed");
+            log.error("Decryption failed for data: {}", encryptedData, e);
+            throw new RuntimeException("Decryption Failed", e);
         }
     }
 }

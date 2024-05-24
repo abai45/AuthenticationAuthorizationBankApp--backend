@@ -8,10 +8,7 @@ import kz.group.reactAndSpring.service.BankCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -30,13 +27,13 @@ public class BankCardResource {
         return ResponseEntity.ok(getResponse(request, Map.of("bankCard", bankCard), "Bank Cart created successfully", OK));
     }
 
-    @PostMapping("/list")
+    @GetMapping("/list")
     public ResponseEntity<Response> listCards(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         var cards = bankCardService.getBankCard(user);
         return ResponseEntity.ok(getResponse(request, Map.of("cards", cards), "Bank cards retrieved successfully", OK));
     }
 
-    @PostMapping("/getfull")
+    @GetMapping("/getfull")
     public ResponseEntity<Response> getFullCard(@AuthenticationPrincipal UserDto user, @RequestBody BankCardNameRequestDto bankCardNameRequest, HttpServletRequest request) {
         var card = bankCardService.getFullCardInfo(user, bankCardNameRequest.getCardName());
         return ResponseEntity.ok(getResponse(request, Map.of("card", card), "Full info of your card retrieved successfully", OK));

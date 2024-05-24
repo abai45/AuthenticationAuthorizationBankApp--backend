@@ -6,12 +6,10 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import kz.group.reactAndSpring.domain.Token;
-import kz.group.reactAndSpring.domain.UserPrincipal;
 import kz.group.reactAndSpring.dto.LoginRequestDto;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.dto.UserTokenResponseDto;
-import kz.group.reactAndSpring.exception.ApiException;
-import kz.group.reactAndSpring.service.EmailService;
+import kz.group.reactAndSpring.service.EncryptionService;
 import kz.group.reactAndSpring.service.JwtService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,19 +18,15 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
-import static java.time.LocalDateTime.now;
 import static kz.group.reactAndSpring.constant.Constants.LOGIN_PATH;
 import static kz.group.reactAndSpring.domain.ApiAuthentication.unauthenticated;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_ATTEMPT;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_SUCCESS;
 import static kz.group.reactAndSpring.utils.RequestUtils.handleErrorResponse;
-import static kz.group.reactAndSpring.utils.UserUtils.generateOtpCode;
 import static org.springframework.http.HttpMethod.POST;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
@@ -42,11 +36,13 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     private final JwtService jwtService;
     private final UserService userService;
+    private final EncryptionService encryptionService;
 
-    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
+    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, EncryptionService encryptionService) {
         super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()));
         this.jwtService = jwtService;
         this.userService = userService;
+        this.encryptionService = encryptionService;
         setAuthenticationManager(authenticationManager);
     }
 
@@ -67,8 +63,30 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
+        var clientIp = request.getRemoteAddr();
         UserDto user = (UserDto) authentication.getPrincipal();
         userService.updateLoginAttempt(user.getEmail(), LOGIN_SUCCESS);
+        String encryptedIpAddress = user.getLocationAddress();
+        if (encryptedIpAddress != null && !encryptedIpAddress.isEmpty()) {
+            String decryptedIpAddress = null;
+            try {
+                decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
+            } catch (Exception e) {
+                log.error("Decryption failed for IP address: {}", encryptedIpAddress, e);
+                handleErrorResponse(request, response, new RuntimeException("Decryption Failed"));
+                return;
+            }
+
+            if (decryptedIpAddress.equals(clientIp)) {
+                user.setEnabled(false);
+            } else {
+                sendLocationValidateLink(request, response, user);
+            }
+        } else {
+            log.warn("User does not have a stored IP address or it is empty.");
+            handleErrorResponse(request, response, new RuntimeException("Stored IP address is null or empty"));
+            return;
+        }
         if (user.isMfa()) {
             sendOtpCode(request, response, user);
         } else {
@@ -92,6 +110,14 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
 
     private void sendOtpCode(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
         userService.sendOtpCodeMessage(user.getEmail());
+        response.setContentType(APPLICATION_JSON_VALUE);
+        response.setStatus(OK.value());
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.writeValue(response.getOutputStream(), user);
+    }
+
+    private void sendLocationValidateLink(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
+        userService.sendLocationValidateLink(user.getEmail());
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
         ObjectMapper mapper = new ObjectMapper();

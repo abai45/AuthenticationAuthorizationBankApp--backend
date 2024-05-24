@@ -19,6 +19,7 @@ public class UserDto {
     private String imgUrl;
     //private String qrCodeImageUri;
     private String otpCode;
+    private String locationAddress;
     private String lastLogin;
     private boolean accountNonExpired;
     private boolean accountNonLocked;

@@ -3,7 +3,6 @@ package kz.group.reactAndSpring.service;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.dto.bankDto.BankCardDto;
 import kz.group.reactAndSpring.dto.bankDto.BankCardFullDataDto;
-import kz.group.reactAndSpring.entity.UserEntity;
 
 import java.math.BigDecimal;
 import java.util.List;

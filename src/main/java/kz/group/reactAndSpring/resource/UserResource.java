@@ -38,7 +38,8 @@ public class UserResource {
 
     @PostMapping("/register")
     public ResponseEntity<UserTokenResponseDto> saveUser(@RequestBody @Valid UserRequestDto user, HttpServletRequest request) {
-        userService.createUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword(),user.getPhone());
+        var clientIp = request.getRemoteAddr();
+        userService.createUser(user.getFirstName(), user.getLastName(), user.getEmail(), user.getPassword(),user.getPhone(), clientIp);
         UserDto newUser = userService.getUserByEmail(user.getEmail());
         UserTokenResponseDto tokenResponse = tokenService.generateTokens(newUser);
         return ResponseEntity.created(getUri()).body(tokenResponse);

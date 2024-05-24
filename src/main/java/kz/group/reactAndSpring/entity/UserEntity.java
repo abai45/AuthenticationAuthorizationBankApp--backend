@@ -30,15 +30,13 @@ public class UserEntity extends Autitable{
     private LocalDateTime lastLogin;
     private LocalDateTime lockTime;
     private LocalDateTime tokenCreatedAt;
-    private BigDecimal balance;
-    private BigDecimal transactionLimit;
-    private BigDecimal bonuses;
     @Column(unique = true, nullable = false)
     private String phone;
     private String imgUrl;
     private boolean accountNonExpired;
     private boolean accountNonLocked;
     private boolean enabled;
+    private String locationAddress;
     private boolean mfa;
     private String otpCode;
     @ManyToOne(fetch = FetchType.EAGER)

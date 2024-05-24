@@ -1,5 +1,6 @@
 package kz.group.reactAndSpring.service.impl;
 
+import kz.group.reactAndSpring.event.listener.UserEventListener;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import kz.group.reactAndSpring.domain.RequestContext;
@@ -54,8 +55,8 @@ public class UserServiceImpl implements UserService {
     private final ApplicationEventPublisher publisher;
 
     @Override
-    public void createUser(String firstName, String lastName, String email, String password, String phone) {
-        var userEntity = userRepository.save(createNewUser(firstName, lastName, email, phone));
+    public void createUser(String firstName, String lastName, String email, String password, String phone, String clientIp) {
+        var userEntity = userRepository.save(createNewUser(firstName, lastName, email, phone, clientIp));
         var credentialEntity = new CredentialEntity(userEntity, encoder.encode(password));
         credentialRepository.save(credentialEntity);
         var confirmationEntity = new ConfirmationEntity(userEntity);
@@ -63,9 +64,9 @@ public class UserServiceImpl implements UserService {
         publisher.publishEvent(new UserEvent(userEntity, EventType.REGISTRATION, Map.of("key", confirmationEntity.getKey())));
     }
 
-    private UserEntity createNewUser(String firstName, String lastName, String email, String phone) {
+    private UserEntity createNewUser(String firstName, String lastName, String email, String phone, String clientIp) {
         var role = getRoleName(AuthorityEnum.USER.name());
-        return createUserEntity(firstName,lastName,email, phone, role);
+        return createUserEntity(firstName,lastName,email, phone, role, clientIp);
     }
     @Override
     public RoleEntity getRoleName(String name) {
@@ -267,6 +268,14 @@ public class UserServiceImpl implements UserService {
                 .filter(userEntity -> !"system@gmail.com".equalsIgnoreCase(userEntity.getEmail()))
                 .map(userEntity -> fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId())))
                 .collect(toList());
+    }
+
+    @Override
+    public void sendLocationValidateLink(String email) {
+        var userEntity = getUserEntityByEmail(email);
+        var confirmationEntity = new ConfirmationEntity(userEntity);
+        confirmationRepository.save(confirmationEntity);
+        publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("ok", confirmationEntity.getKey())));
     }
 
     @Override

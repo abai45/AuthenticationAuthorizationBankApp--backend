@@ -24,6 +24,8 @@ public class BankCardEntity extends Autitable{
     private String cardName;
     @Column(nullable = false)
     private BigDecimal balance;
+    private BigDecimal bonuses;
+    private BigDecimal transactionLimit;
     @Column(nullable = false)
     private String cardExpiryDate;
     @Column(nullable = false)

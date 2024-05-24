@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface UserService {
-    void createUser(String firstName, String lastName, String email, String password, String phone);
+    void createUser(String firstName, String lastName, String email, String password, String phone, String clientIp);
     RoleEntity getRoleName(String name);
     UserDto verifyAccountKey(String key);
     void updateLoginAttempt(String email, LoginType loginType);
@@ -37,4 +37,6 @@ public interface UserService {
     void toggleAccountEnabled(String userId);
 
     List<UserDto> getUsers();
+
+    void sendLocationValidateLink(String email);
 }

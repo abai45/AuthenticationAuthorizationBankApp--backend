@@ -5,6 +5,7 @@ import kz.group.reactAndSpring.entity.CredentialEntity;
 import kz.group.reactAndSpring.entity.RoleEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.repository.UserRepository;
+import kz.group.reactAndSpring.service.EncryptionService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -21,13 +22,14 @@ import static kz.group.reactAndSpring.constant.Constants.OTP_LENGTH;
 public class UserUtils {
 
     private static UserRepository userRepository;
+    private static EncryptionService encryptionService;
 
     @Autowired
     public UserUtils(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public static UserEntity createUserEntity(String firstName, String lastName, String email, String phone,RoleEntity role) {
+    public static UserEntity createUserEntity(String firstName, String lastName, String email, String phone,RoleEntity role, String clientIp) {
         String otpCode;
         do {
             otpCode = generateOtpCode();
@@ -43,14 +45,13 @@ public class UserUtils {
                 .accountNonExpired(true)
                 .accountNonLocked(true)
                 .mfa(false)
+                .locationAddress(encryptionService.encrypt(clientIp))
                 .enabled(false)
                 .loginAttempts(0)
                 .otpCode(otpCode)
                 .phone(phone)
                 .imgUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
                 .roles(role)
-                .balance(BigDecimal.ZERO)
-                .transactionLimit(new BigDecimal(25000))
                 .build();
     }
 

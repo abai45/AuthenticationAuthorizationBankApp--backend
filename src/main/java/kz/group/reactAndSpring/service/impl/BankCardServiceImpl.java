@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,7 +82,7 @@ public class BankCardServiceImpl implements BankCardService {
     @Override
     public BigDecimal getTotalBalance(UserDto userId) {
         var userEntity = getUser(userId);
-        BigDecimal totalBalance = userEntity.getBalance();
+        BigDecimal totalBalance = new BigDecimal(BigInteger.ZERO);
         for(BankCardEntity bankcard: userEntity.getBankCards()) {
             totalBalance = totalBalance.add(bankcard.getBalance());
         }

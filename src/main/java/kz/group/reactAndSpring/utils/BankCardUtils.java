@@ -8,10 +8,11 @@ import kz.group.reactAndSpring.service.EncryptionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.time.MonthDay;
-import java.time.Year;
+import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.Random;
+
+import static java.math.BigDecimal.*;
 
 @Component
 public class BankCardUtils {
@@ -37,6 +38,7 @@ public class BankCardUtils {
                 .cardExpiryDate(generateExpityDate())
                 .cardCVV(cvv)
                 .owner(owner)
+                .balance(ZERO)
                 .cardName(cardName)
                 .build();
     }

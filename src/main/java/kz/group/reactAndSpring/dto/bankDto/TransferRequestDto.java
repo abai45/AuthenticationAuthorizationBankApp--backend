@@ -9,10 +9,10 @@ import lombok.Setter;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class TransferRequestDto {
-    @NotEmpty(message = "Source phone number cannot be empty or null")
-    private String sourcePhone;
-    @NotEmpty(message = "Destination phone number cannot be empty or null")
-    private String destPhone;
+    @NotEmpty(message = "Source card number cannot be empty or null")
+    private String sourceCardNumber;
+    @NotEmpty(message = "Destination card number cannot be empty or null")
+    private String destCardNumber;
     @NotEmpty(message = "Amount cannot be empty or null")
-    private String Amount;
+    private String amount;
 }

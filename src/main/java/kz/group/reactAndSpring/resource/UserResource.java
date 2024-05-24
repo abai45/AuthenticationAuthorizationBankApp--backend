@@ -4,6 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.*;
+import kz.group.reactAndSpring.service.BankCardService;
 import kz.group.reactAndSpring.service.TokenService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import static org.springframework.http.MediaType.IMAGE_PNG_VALUE;
 public class UserResource {
     private final UserService userService;
     private final TokenService tokenService;
+    private final BankCardService bankCardService;
 
     @PostMapping("/register")
     public ResponseEntity<UserTokenResponseDto> saveUser(@RequestBody @Valid UserRequestDto user, HttpServletRequest request) {
@@ -99,6 +101,13 @@ public class UserResource {
         userService.updatePassword(resetPasswordRequest.getUserId(), resetPasswordRequest.getNewPassword(), resetPasswordRequest.getConfirmNewPassword());
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password reset successfully", OK));
     }
+
+    @PostMapping("/getbalance")
+    public ResponseEntity<Response> getUserTotalBalance(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        var totalBalance = bankCardService.getTotalBalance(user);
+        return ResponseEntity.ok(getResponse(request, Map.of("totalBalance", totalBalance), "Total balance retrieved successfully", OK));
+    }
+
     @GetMapping("/list")
     @PreAuthorize("hasAnyAuthority('user:read') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> getUsers(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {

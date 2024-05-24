@@ -9,8 +9,8 @@ import lombok.Setter;
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CreditDebitRequestDto {
-    @NotEmpty(message = "Phone number cannot be empty or null")
-    private String phoneNumber;
+    @NotEmpty(message = "Card number cannot be empty or null")
+    private String cardNumber;
     @NotEmpty(message = "Amount cannot be empty or null")
     private String amount;
 }

@@ -3,6 +3,8 @@ package kz.group.reactAndSpring.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @ToString
@@ -20,6 +22,8 @@ public class BankCardEntity extends Autitable{
     private String cardHolderName;
     @Column(nullable = false)
     private String cardName;
+    @Column(nullable = false)
+    private BigDecimal balance;
     @Column(nullable = false)
     private String cardExpiryDate;
     @Column(nullable = false)

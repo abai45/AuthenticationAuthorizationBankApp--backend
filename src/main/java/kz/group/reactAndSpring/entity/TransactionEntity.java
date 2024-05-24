@@ -24,12 +24,12 @@ public class TransactionEntity extends Autitable {
     private String transactionType;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "source_user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_source"))
-    private UserEntity sourceUser;
+    @JoinColumn(name = "source_card_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_source_card"))
+    private BankCardEntity sourceCard;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "dest_user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_dest"))
-    private UserEntity destUser;
+    @JoinColumn(name = "dest_card_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_dest_card"))
+    private BankCardEntity destCard;
 
     private LocalDateTime transactionDate;
     private BigDecimal amount;

@@ -4,9 +4,7 @@ import jakarta.transaction.Transactional;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.dto.bankDto.BankCardDto;
 import kz.group.reactAndSpring.dto.bankDto.BankCardFullDataDto;
-import kz.group.reactAndSpring.dto.bankDto.TransactionDto;
 import kz.group.reactAndSpring.entity.BankCardEntity;
-import kz.group.reactAndSpring.entity.TransactionEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.exception.ApiException;
 import kz.group.reactAndSpring.repository.BankCardRepository;
@@ -16,10 +14,9 @@ import kz.group.reactAndSpring.service.EncryptionService;
 import kz.group.reactAndSpring.utils.BankCardUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.Hibernate;
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -81,6 +78,15 @@ public class BankCardServiceImpl implements BankCardService {
                 .build();
     }
 
+    @Override
+    public BigDecimal getTotalBalance(UserDto userId) {
+        var userEntity = getUser(userId);
+        BigDecimal totalBalance = userEntity.getBalance();
+        for(BankCardEntity bankcard: userEntity.getBankCards()) {
+            totalBalance = totalBalance.add(bankcard.getBalance());
+        }
+        return totalBalance;
+    }
 
 
     private UserEntity getUser(UserDto user) {

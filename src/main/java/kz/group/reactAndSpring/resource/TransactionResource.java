@@ -28,21 +28,21 @@ public class TransactionResource {
     @PostMapping("/transfer")
     @PreAuthorize("hasAnyAuthority('transaction:create') or hasAnyRole('USER','ADMIN','SUPER_ADMIN')")
     public ResponseEntity<Response> transfer(@AuthenticationPrincipal UserDto user, @RequestBody TransferRequestDto transactionRequest, HttpServletRequest request) {
-        var transaction = transactionService.transferTransaction(transactionRequest.getSourcePhone(), transactionRequest.getDestPhone(), transactionRequest.getAmount());
+        var transaction = transactionService.transferTransaction(transactionRequest.getSourceCardNumber(), transactionRequest.getDestCardNumber(), transactionRequest.getAmount());
         return ResponseEntity.ok(getResponse(request, Map.of("transaction", transaction), "Credit operation successful ended", OK));
     }
 
     @PostMapping("/debit")
     @PreAuthorize("hasAnyAuthority('transaction:create') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> debit(@AuthenticationPrincipal UserDto user, @RequestBody CreditDebitRequestDto creditDebitRequest, HttpServletRequest request) {
-        var debit = transactionService.debitTransaction(creditDebitRequest.getPhoneNumber(), creditDebitRequest.getAmount());
+        var debit = transactionService.debitTransaction(creditDebitRequest.getCardNumber(), creditDebitRequest.getAmount());
         return ResponseEntity.ok(getResponse(request, Map.of("debit", debit), "Debit operation successful ended", OK));
     }
 
     @PostMapping("/credit")
     @PreAuthorize("hasAnyAuthority('transaction:create') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<Response> credit(@AuthenticationPrincipal UserDto user, @RequestBody CreditDebitRequestDto creditDebitRequest, HttpServletRequest request) {
-        var credit = transactionService.creditTransfer(creditDebitRequest.getPhoneNumber(), creditDebitRequest.getAmount());
+        var credit = transactionService.creditTransfer(creditDebitRequest.getCardNumber(), creditDebitRequest.getAmount());
         return ResponseEntity.ok(getResponse(request, Map.of("credit", credit), "Credit operation successful ended", OK));
     }
 
@@ -59,11 +59,4 @@ public class TransactionResource {
         var transactions = transactionService.getTransactions(user.getUserId());
         return ResponseEntity.ok(getResponse(request, Map.of("transactions", transactions), "Get transactions", OK));
     }
-
-//    @GetMapping("/filterdate")
-//    @PreAuthorize("hasAnyAuthority('transaction:read') or hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
-//    public ResponseEntity<Response> getTransactionsFilterDate(@AuthenticationPrincipal UserDto user,@RequestBody Date, HttpServletRequest request) {
-//        var transactions = transactionService.getTransactionsFilterDate(user.getUserId());
-//        return ResponseEntity.ok(getResponse(request, Map.of("transactions", transactions), "Get transactions", OK));
-//    }
 }

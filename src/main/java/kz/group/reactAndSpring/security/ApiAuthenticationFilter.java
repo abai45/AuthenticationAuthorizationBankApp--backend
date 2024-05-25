@@ -5,6 +5,9 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import kz.group.reactAndSpring.api.GeoLocation;
+import kz.group.reactAndSpring.api.GeoLocationApi;
+import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.domain.Token;
 import kz.group.reactAndSpring.dto.LoginRequestDto;
 import kz.group.reactAndSpring.dto.UserDto;
@@ -13,6 +16,7 @@ import kz.group.reactAndSpring.service.EncryptionService;
 import kz.group.reactAndSpring.service.JwtService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -20,8 +24,11 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 
 import static com.fasterxml.jackson.core.JsonParser.Feature.AUTO_CLOSE_SOURCE;
+import static java.time.LocalDateTime.now;
+import static java.util.Collections.emptyMap;
 import static kz.group.reactAndSpring.constant.Constants.LOGIN_PATH;
 import static kz.group.reactAndSpring.domain.ApiAuthentication.unauthenticated;
 import static kz.group.reactAndSpring.enumeration.LoginType.LOGIN_ATTEMPT;
@@ -37,12 +44,14 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private final JwtService jwtService;
     private final UserService userService;
     private final EncryptionService encryptionService;
+    private final GeoLocationApi geoLocationApi;
 
-    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, EncryptionService encryptionService) {
+    public ApiAuthenticationFilter(AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, EncryptionService encryptionService, GeoLocationApi geoLocationApi) {
         super(new AntPathRequestMatcher(LOGIN_PATH, POST.name()));
         this.jwtService = jwtService;
         this.userService = userService;
         this.encryptionService = encryptionService;
+        this.geoLocationApi = geoLocationApi;
         setAuthenticationManager(authenticationManager);
     }
 
@@ -64,19 +73,14 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authentication) throws IOException, ServletException {
         var clientIp = request.getRemoteAddr();
-        UserDto user = (UserDto) authentication.getPrincipal();
+        var user = (UserDto) authentication.getPrincipal();
         userService.updateLoginAttempt(user.getEmail(), LOGIN_SUCCESS);
-        String encryptedIpAddress = user.getLocationAddress();
+        var encryptedIpAddress = user.getLocationAddress();
+        var currentCity = geoLocationApi.geoLocationApi(clientIp).getCity();
         if (encryptedIpAddress != null && !encryptedIpAddress.isEmpty()) {
-            String decryptedIpAddress = null;
-            try {
-                decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
-            } catch (Exception e) {
-                handleErrorResponse(request, response, new RuntimeException("Decryption Failed"));
-                return;
-            }
-            if (decryptedIpAddress.equals(clientIp)) {
-                user.setEnabled(false);
+            var decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
+            var dbCity = geoLocationApi.geoLocationApi(decryptedIpAddress).getCity();
+            if (dbCity.equals(currentCity)) {
                 if(user.isMfa()) {
                     sendOtpCode(request,response,user);
                 } else {
@@ -116,9 +120,18 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     private void sendLocationValidateLink(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
         var clientIp = request.getRemoteAddr();
         userService.sendLocationValidateLink(user.getEmail(), clientIp);
+        Response responseBody = new Response(
+                now().format(DateTimeFormatter.ISO_DATE_TIME),
+                OK.value(),
+                request.getRequestURI(),
+                OK,
+                "Please, update your new location in your email",
+                null,
+                emptyMap()
+        );
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
         ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(response.getOutputStream(), user);
+        mapper.writeValue(response.getOutputStream(), responseBody);
     }
 }

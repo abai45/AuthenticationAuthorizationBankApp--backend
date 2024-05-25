@@ -304,6 +304,7 @@ public class UserServiceImpl implements UserService {
         userEntity.setLocationAddress(encryptionService.encrypt(clientIp));
         userEntity.setEnabled(true);
         userRepository.save(userEntity);
+        confirmationRepository.delete(confirmationEntity);
         return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
     }
 

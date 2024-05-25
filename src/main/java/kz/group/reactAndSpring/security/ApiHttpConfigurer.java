@@ -1,5 +1,6 @@
 package kz.group.reactAndSpring.security;
 
+import kz.group.reactAndSpring.api.GeoLocationApi;
 import kz.group.reactAndSpring.service.EmailService;
 import kz.group.reactAndSpring.service.EncryptionService;
 import kz.group.reactAndSpring.service.JwtService;
@@ -20,6 +21,7 @@ public class ApiHttpConfigurer extends AbstractHttpConfigurer<ApiHttpConfigurer,
     private final JwtService jwtService;
     private final EncryptionService encryptionService;
     private final AuthenticationConfiguration authenticationConfiguration;
+    private final GeoLocationApi geoLocationApi;
 
     @Override
     public void init(HttpSecurity http) throws Exception {
@@ -29,6 +31,6 @@ public class ApiHttpConfigurer extends AbstractHttpConfigurer<ApiHttpConfigurer,
     @Override
     public void configure(HttpSecurity http) throws Exception {
         http.addFilterBefore(authorizationFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAfter(new ApiAuthenticationFilter(authenticationConfiguration.getAuthenticationManager(), jwtService, userService, encryptionService), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterAfter(new ApiAuthenticationFilter(authenticationConfiguration.getAuthenticationManager(), jwtService, userService, encryptionService, geoLocationApi), UsernamePasswordAuthenticationFilter.class);
     }
 }

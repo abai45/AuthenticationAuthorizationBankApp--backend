@@ -2,6 +2,7 @@ package kz.group.reactAndSpring.service.impl;
 
 import kz.group.reactAndSpring.event.listener.UserEventListener;
 import kz.group.reactAndSpring.repository.*;
+import kz.group.reactAndSpring.service.EncryptionService;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import kz.group.reactAndSpring.domain.RequestContext;
@@ -52,7 +53,7 @@ public class UserServiceImpl implements UserService {
     private final ApplicationEventPublisher publisher;
     private final BankCardRepository bankCardRepository;
     private final TransactionRepository transactionRepository;
-    private final EncryptionServiceImpl encryptionServiceImpl;
+    private final EncryptionService encryptionService;
 
     @Override
     public void createUser(String firstName, String lastName, String email, String password, String phone, String clientIp) {
@@ -185,7 +186,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public void verifyOtpCode(String email,String otpCode) {
         var user = getUserEntityByEmail(email);
-        if(!otpCode.equals(user.getOtpCode())) {
+        var decryptUserOTP = encryptionService.decrypt(user.getOtpCode());
+        if(!otpCode.equals(decryptUserOTP)) {
             throw new ApiException("Incorrect OTP code");
         }
         if(user.getTokenCreatedAt() != null && user.getTokenCreatedAt().plusMinutes(10).isBefore(now())) {
@@ -215,7 +217,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto userOtpVerify(String email, String otpCode) {
         var userEntity = getUserEntityByEmail(email);
-        if (!otpCode.equals(userEntity.getOtpCode())) {
+        var decryptedUserOTP = encryptionService.decrypt(userEntity.getOtpCode());
+        if (!otpCode.equals(decryptedUserOTP)) {
             throw new ApiException("OTP code is not correct");
         }
         if(userEntity.getTokenCreatedAt()!=null && userEntity.getTokenCreatedAt().plusMinutes(5).isBefore(now())) {
@@ -232,7 +235,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void sendOtpCodeMessage(String email) {
         var user = getUserEntityByEmail(email);
-        var otpCode = generateOtpCode();
+        var otpCode = encryptionService.encrypt(generateOtpCode());
         user.setOtpCode(otpCode);
         user.setTokenCreatedAt(now());
         userRepository.save(user);
@@ -276,15 +279,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void sendLocationValidateLink(String email) {
+    public void sendLocationValidateLink(String email, String clientIp) {
         var userEntity = getUserEntityByEmail(email);
         var confirmation = getUserConfirmation(userEntity);
         if(confirmation != null) {
-            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmation.getKey())));
+            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmation.getKey(), "clientIp", clientIp)));
         } else {
             var confirmationEntity = new ConfirmationEntity(userEntity);
             confirmationRepository.save(confirmationEntity);
-            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmationEntity.getKey())));
+            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmationEntity.getKey(), "clientIp", clientIp)));
         }
     }
 
@@ -298,7 +301,7 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null) {
             throw new ApiException("Incorrect token");
         }
-        userEntity.setLocationAddress(encryptionServiceImpl.encrypt(clientIp));
+        userEntity.setLocationAddress(encryptionService.encrypt(clientIp));
         userEntity.setEnabled(true);
         userRepository.save(userEntity);
         return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));

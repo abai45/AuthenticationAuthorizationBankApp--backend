@@ -1,6 +1,8 @@
 package kz.group.reactAndSpring.service.impl;
 
 import jakarta.mail.internet.MimeMessage;
+import kz.group.reactAndSpring.api.GeoLocation;
+import kz.group.reactAndSpring.api.GeoLocationApi;
 import kz.group.reactAndSpring.exception.ApiException;
 import kz.group.reactAndSpring.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +35,8 @@ public class EmailServiceImpl implements EmailService {
     public static final String UTF_8_ENCODING = "UTF-8";
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final EncryptionServiceImpl encryptionService;
+    private final GeoLocationApi geoLocationApi;
     @Value("${spring.mail.verify.host}")
     private String host;
     @Value("${spring.mail.username}")
@@ -43,7 +47,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendNewAccountHtmlPage(String name, String otpCode, String email, String key) {
         try {
             Context context = new Context();
-            context.setVariables(Map.of("name",name,"otpCode",otpCode,"url",getVerificationUrl(host, key)));
+            context.setVariables(Map.of("name",name,"otpCode",encryptionService.decrypt(otpCode),"url",getVerificationUrl(host, key)));
             String text = templateEngine.process(EMAIL_VERIFY_TEMPLATE, context);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             var message = new MimeMessageHelper(mimeMessage, true, UTF_8_ENCODING);
@@ -85,7 +89,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendOtpMessageHtmlPage(String name, String email, String otpCode) {
         try {
             Context context = new Context();
-            context.setVariables(Map.of("name", name, "otpCode", otpCode));
+            context.setVariables(Map.of("name", name, "otpCode", encryptionService.decrypt(otpCode)));
             String text = templateEngine.process(EMAIL_OTP_TEMPLATE, context);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             var message = new MimeMessageHelper(mimeMessage, true, UTF_8_ENCODING);
@@ -102,10 +106,12 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     @Async
-    public void sendIpAddressVerify(String name, String email, String key) {
+    public void sendIpAddressVerify(String name, String email, String key, String clientIp) {
         try {
             Context context = new Context();
-            context.setVariables(Map.of("name", name, "url", getVerificationUrl(host, key)));
+            GeoLocation geoLocation = geoLocationApi.geoLocationApi(clientIp);
+            String geoInfo = geoLocation.getCountry() + ", " + geoLocation.getCity();
+            context.setVariables(Map.of("name", name, "url", getVerificationUrl(host, key), "clientIp", clientIp, "geoInfo", geoInfo));
             String text = templateEngine.process(EMAIL_IP_LOCATION_TEMPLATE, context);
             MimeMessage mimeMessage = mailSender.createMimeMessage();
             var message = new MimeMessageHelper(mimeMessage, true, UTF_8_ENCODING);

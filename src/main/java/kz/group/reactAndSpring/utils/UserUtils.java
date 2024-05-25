@@ -49,7 +49,7 @@ public class UserUtils {
                 .locationAddress(encryptionService.encrypt(clientIp))
                 .enabled(false)
                 .loginAttempts(0)
-                .otpCode(otpCode)
+                .otpCode(encryptionService.encrypt(otpCode))
                 .phone(phone)
                 .imgUrl("https://cdn-icons-png.flaticon.com/512/149/149071.png")
                 .roles(role)

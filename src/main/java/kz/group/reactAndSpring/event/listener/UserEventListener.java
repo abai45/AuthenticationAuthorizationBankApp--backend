@@ -16,7 +16,7 @@ public class UserEventListener {
         switch (userEvent.getType()) {
             case REGISTRATION -> emailService.sendNewAccountHtmlPage(userEvent.getUser().getFirstName(),userEvent.getUser().getOtpCode(), userEvent.getUser().getEmail(), (String)userEvent.getData().get("key"));
             case RESETPASSWORD -> emailService.sendPasswordResetEmailHtmlPage(userEvent.getUser().getFirstName(), userEvent.getUser().getEmail(), (String)userEvent.getData().get("key"));
-            case IPADDRESSVERIFY -> emailService.sendIpAddressVerify(userEvent.getUser().getFirstName(), userEvent.getUser().getEmail(), (String)userEvent.getData().get("key"));
+            case IPADDRESSVERIFY -> emailService.sendIpAddressVerify(userEvent.getUser().getFirstName(), userEvent.getUser().getEmail(), (String)userEvent.getData().get("key"), (String)userEvent.getData().get("clientIp"));
             default -> {}
         }
     }

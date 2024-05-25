@@ -77,18 +77,17 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
             }
             if (decryptedIpAddress.equals(clientIp)) {
                 user.setEnabled(false);
+                if(user.isMfa()) {
+                    sendOtpCode(request,response,user);
+                } else {
+                    sendResponse(request,response,user);
+                }
             } else {
                 sendLocationValidateLink(request, response, user);
             }
         } else {
             log.warn("User does not have a stored IP address or it is empty.");
             handleErrorResponse(request, response, new RuntimeException("Stored IP address is null or empty"));
-            return;
-        }
-        if (user.isMfa()) {
-            sendOtpCode(request, response, user);
-        } else {
-            sendResponse(request, response, user);
         }
     }
 
@@ -115,7 +114,8 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
     }
 
     private void sendLocationValidateLink(HttpServletRequest request, HttpServletResponse response, UserDto user) throws IOException {
-        userService.sendLocationValidateLink(user.getEmail());
+        var clientIp = request.getRemoteAddr();
+        userService.sendLocationValidateLink(user.getEmail(), clientIp);
         response.setContentType(APPLICATION_JSON_VALUE);
         response.setStatus(OK.value());
         ObjectMapper mapper = new ObjectMapper();

@@ -37,7 +37,7 @@ public interface UserService {
 
     List<UserDto> getUsers();
 
-    void sendLocationValidateLink(String email);
+    void sendLocationValidateLink(String email, String clientIp);
     UserDto verifyAccountKey(String key, String clientIp);
 
 }

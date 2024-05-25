@@ -72,11 +72,9 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
             try {
                 decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
             } catch (Exception e) {
-                log.error("Decryption failed for IP address: {}", encryptedIpAddress, e);
                 handleErrorResponse(request, response, new RuntimeException("Decryption Failed"));
                 return;
             }
-
             if (decryptedIpAddress.equals(clientIp)) {
                 user.setEnabled(false);
             } else {

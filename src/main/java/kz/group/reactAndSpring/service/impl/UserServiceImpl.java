@@ -1,6 +1,7 @@
 package kz.group.reactAndSpring.service.impl;
 
 import kz.group.reactAndSpring.event.listener.UserEventListener;
+import kz.group.reactAndSpring.repository.*;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import kz.group.reactAndSpring.domain.RequestContext;
@@ -14,10 +15,6 @@ import kz.group.reactAndSpring.enumeration.EventType;
 import kz.group.reactAndSpring.enumeration.LoginType;
 import kz.group.reactAndSpring.event.UserEvent;
 import kz.group.reactAndSpring.exception.ApiException;
-import kz.group.reactAndSpring.repository.ConfirmationRepository;
-import kz.group.reactAndSpring.repository.CredentialRepository;
-import kz.group.reactAndSpring.repository.RoleRepository;
-import kz.group.reactAndSpring.repository.UserRepository;
 import kz.group.reactAndSpring.service.EmailService;
 import kz.group.reactAndSpring.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +50,9 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final BCryptPasswordEncoder encoder;
     private final ApplicationEventPublisher publisher;
+    private final BankCardRepository bankCardRepository;
+    private final TransactionRepository transactionRepository;
+    private final EncryptionServiceImpl encryptionServiceImpl;
 
     @Override
     public void createUser(String firstName, String lastName, String email, String password, String phone, String clientIp) {
@@ -72,19 +72,6 @@ public class UserServiceImpl implements UserService {
     public RoleEntity getRoleName(String name) {
         var role = roleRepository.findByNameIgnoreCase(name);
         return role.orElseThrow(() -> new ApiException("Role is not found"));
-    }
-
-    @Override
-    public UserDto verifyAccountKey(String key) {
-        var confirmationEntity = getUserConfirmation(key);
-        var userEntity = getUserEntityByEmail(confirmationEntity.getUserEntity().getEmail());
-        if (confirmationEntity == null) {
-            throw new ApiException("Unable to find token");
-        }
-        if (userEntity == null) {
-            throw new ApiException("Incorrect token");
-        }
-        return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
     }
 
     @Override
@@ -258,6 +245,24 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new ApiException("User not found");
         }
+        var transactions = transactionRepository.findAllByOwner(user);
+        if (!transactions.isEmpty()) {
+            transactionRepository.deleteAll(transactions);
+        }
+        var bankCards = bankCardRepository.findAllByOwner(user);
+        for (var bankCard : bankCards) {
+            var sourceTransactions = transactionRepository.findAllBySourceCard(bankCard);
+            var destTransactions = transactionRepository.findAllByDestCard(bankCard);
+            if (!sourceTransactions.isEmpty()) {
+                transactionRepository.deleteAll(sourceTransactions);
+            }
+            if (!destTransactions.isEmpty()) {
+                transactionRepository.deleteAll(destTransactions);
+            }
+        }
+        if (!bankCards.isEmpty()) {
+            bankCardRepository.deleteAll(bankCards);
+        }
         userRepository.delete(user);
     }
 
@@ -273,9 +278,30 @@ public class UserServiceImpl implements UserService {
     @Override
     public void sendLocationValidateLink(String email) {
         var userEntity = getUserEntityByEmail(email);
-        var confirmationEntity = new ConfirmationEntity(userEntity);
-        confirmationRepository.save(confirmationEntity);
-        publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("ok", confirmationEntity.getKey())));
+        var confirmation = getUserConfirmation(userEntity);
+        if(confirmation != null) {
+            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmation.getKey())));
+        } else {
+            var confirmationEntity = new ConfirmationEntity(userEntity);
+            confirmationRepository.save(confirmationEntity);
+            publisher.publishEvent(new UserEvent(userEntity, EventType.IPADDRESSVERIFY, Map.of("key", confirmationEntity.getKey())));
+        }
+    }
+
+    @Override
+    public UserDto verifyAccountKey(String key, String clientIp) {
+        var confirmationEntity = getUserConfirmation(key);
+        var userEntity = getUserEntityByEmail(confirmationEntity.getUserEntity().getEmail());
+        if (confirmationEntity == null) {
+            throw new ApiException("Unable to find token");
+        }
+        if (userEntity == null) {
+            throw new ApiException("Incorrect token");
+        }
+        userEntity.setLocationAddress(encryptionServiceImpl.encrypt(clientIp));
+        userEntity.setEnabled(true);
+        userRepository.save(userEntity);
+        return fromUserEntity(userEntity, userEntity.getRoles(), getUserCredentialById(userEntity.getId()));
     }
 
     @Override

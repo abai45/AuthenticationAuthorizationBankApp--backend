@@ -84,6 +84,13 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password updated successfully", OK));
     }
 
+    @GetMapping("/verify/account")
+    public ResponseEntity<Response> verifyAccount(@RequestParam("key") String key, HttpServletRequest request) {
+        var clientIp = request.getRemoteAddr();
+        var user = userService.verifyAccountKey(key, clientIp);
+        return ResponseEntity.ok().body(getResponse(request, Map.of("user",user), "Account key is valid", OK));
+    }
+
     //forgot pass
     @PostMapping("/resetpassword")
     public ResponseEntity<Response> resetPassword(@RequestBody @Valid EmailRequestDto emailRequest, HttpServletRequest request) {

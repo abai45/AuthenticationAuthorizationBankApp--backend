@@ -12,6 +12,8 @@ import java.util.Optional;
 @Repository
 public interface TransactionRepository extends JpaRepository<TransactionEntity, Long> {
     List<TransactionEntity> getTransactionEntitiesBySourceCard(BankCardEntity bankCard);
-    List<TransactionEntity> getTransactionEntitiesByStatus(String status);
     TransactionEntity findByTransactionId(String transactionId);
+    List<TransactionEntity> findAllByOwner(UserEntity user);
+    List<TransactionEntity> findAllBySourceCard(BankCardEntity sourceCard);
+    List<TransactionEntity> findAllByDestCard(BankCardEntity destCard);
 }

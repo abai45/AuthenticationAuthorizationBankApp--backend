@@ -25,8 +25,9 @@ public class UserUtils {
     private static EncryptionService encryptionService;
 
     @Autowired
-    public UserUtils(UserRepository userRepository) {
+    public UserUtils(UserRepository userRepository, EncryptionService encryptionService) {
         this.userRepository = userRepository;
+        this.encryptionService = encryptionService;
     }
 
     public static UserEntity createUserEntity(String firstName, String lastName, String email, String phone,RoleEntity role, String clientIp) {

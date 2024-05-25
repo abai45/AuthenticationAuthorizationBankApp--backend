@@ -1,7 +1,6 @@
 package kz.group.reactAndSpring.service.impl;
 
 import jakarta.mail.internet.MimeMessage;
-import kz.group.reactAndSpring.entity.UserEntity;
 import kz.group.reactAndSpring.exception.ApiException;
 import kz.group.reactAndSpring.service.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +29,7 @@ public class EmailServiceImpl implements EmailService {
     public static final String EMAIL_VERIFY_TEMPLATE = "emailVerify";
     public static final String EMAIL_RESET_TEMPLATE = "emailReset";
     public static final String EMAIL_OTP_TEMPLATE = "emailOtp";
-    public static final String EMAIL_IP_LOCATION_TEMPLATE = "emailIpLocation";
+    public static final String EMAIL_IP_LOCATION_TEMPLATE = "emailIpVerify";
     public static final String UTF_8_ENCODING = "UTF-8";
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
@@ -38,22 +37,6 @@ public class EmailServiceImpl implements EmailService {
     private String host;
     @Value("${spring.mail.username}")
     private String fromEmail;
-
-//    @Override
-//    @Async
-//    public void sendNewAccountEmail(String name, String otpCode, String email, String key) {
-//        try {
-//            var message = new SimpleMailMessage();
-//            message.setSubject(NEW_USER_ACCOUNT_VERIFICATION);
-//            message.setFrom(fromEmail);
-//            message.setTo(email);
-//            message.setText(getEmailMessage(name,otpCode,host,key));
-//            mailSender.send(message);
-//        } catch (Exception exception) {
-//            log.error(exception.getMessage());
-//            throw new ApiException("Unable to send email");
-//        }
-//    }
 
     @Override
     @Async
@@ -76,24 +59,6 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-//    @Override
-//    @Async
-//    public void sendPasswordResetEmail(String name, String email, String key) {
-//        try {
-//            Context context = new Context();
-//            context.setVariables(Map.of("name",name,"url",getVerificationUrl(host, key)));
-//            var message = new SimpleMailMessage();
-//            message.setSubject(RESET_PASSWORD_REQUEST);
-//            message.setFrom(fromEmail);
-//            message.setTo(email);
-//            message.setText(getResetPasswordMessage(name,host,key));
-//            mailSender.send(message);
-//        } catch (Exception exception) {
-//            log.error(exception.getMessage());
-//            throw new ApiException("Unable to send email");
-//        }
-//    }
-
     @Override
     @Async
     public void sendPasswordResetEmailHtmlPage(String name, String email, String key) {
@@ -114,40 +79,26 @@ public class EmailServiceImpl implements EmailService {
             throw new ApiException("Unable to send email");
         }
     }
-//    @Override
-//    @Async
-//    public void sendOtpMessage(String email, String textTo) {
-//        try {
-//            var message = new SimpleMailMessage();
-//            message.setSubject(VERIFY_OTP_LOGIN);
-//            message.setFrom(fromEmail);
-//            message.setTo(email);
-//            message.setText(textTo);
-//            mailSender.send(message);
-//        } catch (Exception exception) {
-//            log.error(exception.getMessage());
-//            throw new ApiException("Unable to send email");
-//        }
-//    }
-@Override
-@Async
-public void sendOtpMessageHtmlPage(String name, String email, String otpCode) {
-    try {
-        Context context = new Context();
-        context.setVariables(Map.of("name", name, "otpCode", otpCode));
-        String text = templateEngine.process(EMAIL_OTP_TEMPLATE, context);
-        MimeMessage mimeMessage = mailSender.createMimeMessage();
-        var message = new MimeMessageHelper(mimeMessage, true, UTF_8_ENCODING);
-        message.setSubject(VERIFY_OTP_LOGIN);
-        message.setFrom(fromEmail);
-        message.setTo(email);
-        message.setText(text, true);
-        mailSender.send(mimeMessage);
-    } catch (Exception exception) {
-        log.error(exception.getMessage());
-        throw new ApiException("Unable to send email");
+
+    @Override
+    @Async
+    public void sendOtpMessageHtmlPage(String name, String email, String otpCode) {
+        try {
+            Context context = new Context();
+            context.setVariables(Map.of("name", name, "otpCode", otpCode));
+            String text = templateEngine.process(EMAIL_OTP_TEMPLATE, context);
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            var message = new MimeMessageHelper(mimeMessage, true, UTF_8_ENCODING);
+            message.setSubject(VERIFY_OTP_LOGIN);
+            message.setFrom(fromEmail);
+            message.setTo(email);
+            message.setText(text, true);
+            mailSender.send(mimeMessage);
+        } catch (Exception exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("Unable to send email");
+        }
     }
-}
 
     @Override
     @Async

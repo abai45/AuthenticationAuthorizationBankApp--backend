@@ -51,4 +51,8 @@ public class UserEntity extends Autitable{
     private RoleEntity roles;
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BankCardEntity> bankCards;
+
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<TransactionEntity> transactions;
+
 }

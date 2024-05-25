@@ -31,6 +31,9 @@ public class TransactionEntity extends Autitable {
     @JoinColumn(name = "dest_card_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_dest_card"))
     private BankCardEntity destCard;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", foreignKey = @ForeignKey(name = "fk_transaction_owner"))
+    private UserEntity owner;
     private LocalDateTime transactionDate;
     private BigDecimal amount;
     private String status;

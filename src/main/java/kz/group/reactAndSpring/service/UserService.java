@@ -14,7 +14,6 @@ import java.util.List;
 public interface UserService {
     void createUser(String firstName, String lastName, String email, String password, String phone, String clientIp);
     RoleEntity getRoleName(String name);
-    UserDto verifyAccountKey(String key);
     void updateLoginAttempt(String email, LoginType loginType);
     UserDto getUserByUserId(String userId);
     UserDto getUserByEmail(String email);
@@ -39,4 +38,6 @@ public interface UserService {
     List<UserDto> getUsers();
 
     void sendLocationValidateLink(String email);
+    UserDto verifyAccountKey(String key, String clientIp);
+
 }

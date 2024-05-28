@@ -5,6 +5,7 @@ import kz.group.reactAndSpring.dto.bankDto.TransactionDto;
 import kz.group.reactAndSpring.entity.BankCardEntity;
 import kz.group.reactAndSpring.entity.TransactionEntity;
 import kz.group.reactAndSpring.entity.UserEntity;
+import kz.group.reactAndSpring.enumeration.BankType;
 import kz.group.reactAndSpring.exception.ApiException;
 import kz.group.reactAndSpring.repository.BankCardRepository;
 import kz.group.reactAndSpring.repository.TransactionRepository;
@@ -58,8 +59,18 @@ public class TransactionServiceImpl implements TransactionService {
     public TransactionDto debitTransaction(String phoneNumber, String amount) {
         var bankEntity = getBankEntityByPhoneNumber(phoneNumber);
         var userAmount = new BigDecimal(amount);
+        checkCardTransactionLimit(bankEntity, userAmount);
         checkBalanceForTransaction(bankEntity, userAmount);
+        var bonuses = BigDecimal.ZERO;
+        if (bankEntity.getCardName().equals(BankType.PREMIUM.getValue())) {
+            bonuses = userAmount.multiply(BigDecimal.valueOf(0.10));
+        } else {
+            bonuses = userAmount.multiply(BigDecimal.valueOf(0.05));
+        }
         bankEntity.setBalance(bankEntity.getBalance().subtract(userAmount));
+        bankEntity.setTransactionLimit(bankEntity.getTransactionLimit().subtract(userAmount));
+        bankEntity.setBalance(bankEntity.getBalance().add(bonuses));
+        bankEntity.setBonuses(bankEntity.getBalance().add(bonuses));
         bankCardRepository.save(bankEntity);
         var transaction = createCreditDebitTransaction(bankEntity, DEBIT, userAmount, COMPLETED);
         transactionRepository.save(transaction);
@@ -96,6 +107,12 @@ public class TransactionServiceImpl implements TransactionService {
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
         return transactionDtos;
+    }
+
+    private void checkCardTransactionLimit(BankCardEntity bankCardEntity, BigDecimal amount) {
+        if(bankCardEntity.getTransactionLimit().compareTo(amount) < 0) {
+            throw new ApiException("Transaction limit exceeded");
+        }
     }
 
     private void checkBalanceForTransaction(BankCardEntity bankCard, BigDecimal amount) {

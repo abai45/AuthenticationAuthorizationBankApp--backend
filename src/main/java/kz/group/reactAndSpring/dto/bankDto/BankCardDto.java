@@ -10,6 +10,7 @@ import lombok.*;
 public class BankCardDto {
     private String last4Digits;
     private String cardHolderName;
+    private String balance;
     private String cardName;
     private String cardExpiryDate;
 }

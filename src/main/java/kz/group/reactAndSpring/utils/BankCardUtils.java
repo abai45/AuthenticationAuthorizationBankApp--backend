@@ -27,7 +27,7 @@ public class BankCardUtils {
         this.encryptionService = encryptionService;
     }
 
-    public static BankCardEntity createBankCardEntity(UserEntity owner,String cardName) {
+    public static BankCardEntity createBankCardEntity(UserEntity owner,String cardName, BigDecimal limit, BigDecimal bonusAmount) {
         String cardNumber = generateCardNumber();
         String last4Digits= cardNumber.substring(15);
         String cvv = encryptionService.encrypt(generateCVV());
@@ -39,6 +39,8 @@ public class BankCardUtils {
                 .cardCVV(cvv)
                 .owner(owner)
                 .balance(ZERO)
+                .transactionLimit(limit)
+                .bonuses(bonusAmount)
                 .cardName(cardName)
                 .build();
     }

@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static java.time.LocalDateTime.*;
 import static kz.group.reactAndSpring.constant.Constants.NINETY_DAYS;
 import static kz.group.reactAndSpring.domain.ApiAuthentication.*;
 
@@ -30,7 +31,7 @@ public class ApiAuthenticationProvider implements AuthenticationProvider {
         var user = userService.getUserByEmail(apiAuth.getEmail());
         if(user != null) {
             var userCredential = userService.getUserCredentialById(user.getId());
-            if(userCredential.getUpdatedAt().minusDays(NINETY_DAYS).isAfter(LocalDateTime.now())) {
+            if(userCredential.getUpdatedAt().minusDays(NINETY_DAYS).isAfter(now())) {
                 throw new ApiException("Credential expired. Please reset your password.");
             }
             var userPrincipal = new UserPrincipal(user, userCredential);

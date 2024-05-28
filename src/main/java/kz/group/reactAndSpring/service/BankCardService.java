@@ -12,4 +12,7 @@ public interface BankCardService {
     List<BankCardDto> getBankCard(UserDto user);
     BankCardFullDataDto getFullCardInfo(UserDto user, String cardName);
     BigDecimal getTotalBalance(UserDto userId);
+    BigDecimal getBonuses(UserDto user);
+    void deleteBankCard(UserDto user, String cardName);
+    void setLimitToCard(UserDto user, String cardName, String limit);
 }

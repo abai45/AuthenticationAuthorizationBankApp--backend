@@ -69,7 +69,6 @@ public class UserUtils {
     }
 
     private static boolean isOtpCodeExists(String otpCode) {
-
         return userRepository.existsByOtpCode(otpCode);
     }
 

@@ -110,10 +110,16 @@ public class UserResource {
         return ResponseEntity.ok().body(getResponse(request,emptyMap(), "Password reset successfully", OK));
     }
 
-    @PostMapping("/getbalance")
+    @GetMapping("/getbalance")
     public ResponseEntity<Response> getUserTotalBalance(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
         var totalBalance = bankCardService.getTotalBalance(user);
         return ResponseEntity.ok(getResponse(request, Map.of("totalBalance", totalBalance), "Total balance retrieved successfully", OK));
+    }
+
+    @GetMapping("/getbonuses")
+    public ResponseEntity<Response> getUserBonuses(@AuthenticationPrincipal UserDto user, HttpServletRequest request) {
+        var bonuses = bankCardService.getBonuses(user);
+        return ResponseEntity.ok(getResponse(request, Map.of("bonuses", bonuses), "Bonuses retrieved successfully", OK));
     }
 
     @GetMapping("/list")

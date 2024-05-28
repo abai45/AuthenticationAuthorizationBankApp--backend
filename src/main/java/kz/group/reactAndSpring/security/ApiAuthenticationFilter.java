@@ -76,18 +76,29 @@ public class ApiAuthenticationFilter extends AbstractAuthenticationProcessingFil
         var user = (UserDto) authentication.getPrincipal();
         userService.updateLoginAttempt(user.getEmail(), LOGIN_SUCCESS);
         var encryptedIpAddress = user.getLocationAddress();
-        var currentCity = geoLocationApi.geoLocationApi(clientIp).getCity();
-        if (encryptedIpAddress != null && !encryptedIpAddress.isEmpty()) {
+//        var currentCity = geoLocationApi.geoLocationApi(clientIp).getCity();
+//        if (encryptedIpAddress != null && !encryptedIpAddress.isEmpty()) {
+//            var decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
+//            var dbCity = geoLocationApi.geoLocationApi(decryptedIpAddress).getCity();
+//            if (dbCity.equals(currentCity)) {
+//                if(user.isMfa()) {
+//                    sendOtpCode(request,response,user);
+//                } else {
+//                    sendResponse(request,response,user);
+//                }
+//            } else {
+//                sendLocationValidateLink(request, response, user);
+//            }
+        if(encryptedIpAddress != null && !encryptedIpAddress.isEmpty()) {
             var decryptedIpAddress = encryptionService.decrypt(encryptedIpAddress);
-            var dbCity = geoLocationApi.geoLocationApi(decryptedIpAddress).getCity();
-            if (dbCity.equals(currentCity)) {
+            if(decryptedIpAddress.equals(clientIp)) {
                 if(user.isMfa()) {
                     sendOtpCode(request,response,user);
                 } else {
                     sendResponse(request,response,user);
                 }
             } else {
-                sendLocationValidateLink(request, response, user);
+                sendLocationValidateLink(request,response,user);
             }
         } else {
             log.warn("User does not have a stored IP address or it is empty.");

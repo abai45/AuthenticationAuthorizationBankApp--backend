@@ -116,6 +116,7 @@ public class BankCardServiceImpl implements BankCardService {
                 .cardNumber(encryptionService.decrypt(bankCardEntity.getCardNumber()))
                 .cardHolderName(bankCardEntity.getCardHolderName())
                 .cardCVV(encryptionService.decrypt(bankCardEntity.getCardCVV()))
+                .balance(bankCardEntity.getBalance().toString())
                 .cardExpiryDate(bankCardEntity.getCardExpiryDate())
                 .cardName(bankCardEntity.getCardName())
                 .last4Digits(bankCardFullData.getLast4Digits())

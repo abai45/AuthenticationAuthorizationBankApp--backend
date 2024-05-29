@@ -8,8 +8,10 @@ import kz.group.reactAndSpring.dto.bankDto.SetLimitRequestDto;
 import kz.group.reactAndSpring.service.BankCardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -30,8 +32,8 @@ public class BankCardResource {
     }
 
     @PostMapping("/delete")
-    public ResponseEntity<Response> deleteCard(@AuthenticationPrincipal UserDto user, @RequestBody BankCardNameRequestDto bankCardNameRequest, HttpServletRequest request) {
-        bankCardService.deleteBankCard(user, bankCardNameRequest.getCardName());
+    public ResponseEntity<Response> deleteCard(@AuthenticationPrincipal UserDto user, @RequestParam("cardname") String cardName, HttpServletRequest request) {
+        bankCardService.deleteBankCard(user, cardName);
         return ResponseEntity.ok(getResponse(request, emptyMap(), "Bank Card deleted successfully", OK));
     }
 
@@ -42,12 +44,12 @@ public class BankCardResource {
     }
 
     @GetMapping("/getfull")
-    public ResponseEntity<Response> getFullCard(@AuthenticationPrincipal UserDto user, @RequestBody BankCardNameRequestDto bankCardNameRequest, HttpServletRequest request) {
-        var card = bankCardService.getFullCardInfo(user, bankCardNameRequest.getCardName());
-        return ResponseEntity.ok(getResponse(request, Map.of("card", card), "Full info of your card retrieved successfully", OK));
+    public ResponseEntity<Response> getFullCardInfo(@AuthenticationPrincipal UserDto user, @RequestParam("cardname") String cardName, HttpServletRequest request) {
+        var bankCard = bankCardService.getFullCardInfo(user, cardName);
+        return ResponseEntity.ok().body(getResponse(request,Map.of("bankCard", bankCard), "Photo updated successfully", OK));
     }
 
-    @PostMapping("/setLimit")
+    @PostMapping("/setlimit")
     public ResponseEntity<Response> setLimit(@AuthenticationPrincipal UserDto user, @RequestBody SetLimitRequestDto setLimitRequest, HttpServletRequest request) {
         bankCardService.setLimitToCard(user, setLimitRequest.getCardName(), setLimitRequest.getLimit());
         return ResponseEntity.ok(getResponse(request, emptyMap(), "Limit updated successfully", OK));

@@ -50,7 +50,7 @@ public class BankCardServiceImpl implements BankCardService {
             bonusAmount = BigDecimal.valueOf(5000);
         } else if (BankType.STANDART.getValue().equals(bankCardName) || BankType.DEPOSIT.getValue().equals(bankCardName)) {
             limit = BigDecimal.valueOf(25000);
-            bonusAmount = BigDecimal.valueOf(5000);
+            bonusAmount = BigDecimal.valueOf(2500);
         } else {
             throw new ApiException("Invalid bank card name");
         }
@@ -63,12 +63,7 @@ public class BankCardServiceImpl implements BankCardService {
     @Override
     public void deleteBankCard(UserDto user, String cardName) {
         var userEntity = getUser(user);
-        var bankCardEntity = new BankCardEntity();
-        for(BankCardEntity bankcard: userEntity.getBankCards()) {
-            if(bankcard.getCardName().equals(cardName)) {
-                bankCardEntity = bankcard;
-            }
-        }
+        var bankCardEntity = getBankCardEntity(userEntity.getBankCards(), cardName);
         var transactionsEntity = transactionRepository.findAllBySourceCard(bankCardEntity);
         transactionRepository.deleteAll(transactionsEntity);
         userEntity.getBankCards().remove(bankCardEntity);
@@ -79,12 +74,9 @@ public class BankCardServiceImpl implements BankCardService {
     public void setLimitToCard(UserDto user, String cardName, String limit) {
         var userEntity = getUser(user);
         var newLimit = new BigDecimal(limit);
-        for(BankCardEntity bankcard: userEntity.getBankCards()) {
-            if(bankcard.getCardName().equals(cardName)) {
-                bankcard.setTransactionLimit(newLimit);
-                bankCardRepository.save(bankcard);
-            }
-        }
+        var bankCardEntity = getBankCardEntity(userEntity.getBankCards(), cardName);
+        bankCardEntity.setTransactionLimit(newLimit);
+        bankCardRepository.save(bankCardEntity);
     }
 
 
@@ -107,19 +99,16 @@ public class BankCardServiceImpl implements BankCardService {
     @Override
     public BankCardFullDataDto getFullCardInfo(UserDto user, String cardName) {
         var userEntity = getUser(user);
-        var bankCardEntity = bankCardRepository.findAllByOwner(userEntity).stream()
-                .filter(card -> card.getCardName().equals(cardName))
-                .findFirst()
-                .orElseThrow(() -> new ApiException("No bank card found"));
-        var bankCardFullData = new BankCardFullDataDto();
-        return bankCardFullData.builder()
+        var bankCards = bankCardRepository.findAllByOwner(userEntity);
+        var bankCardEntity = getBankCardEntity(bankCards, cardName);
+        return BankCardFullDataDto.builder()
                 .cardNumber(encryptionService.decrypt(bankCardEntity.getCardNumber()))
+                .cardName(bankCardEntity.getCardName())
+                .last4Digits(bankCardEntity.getLast4Digits())
                 .cardHolderName(bankCardEntity.getCardHolderName())
-                .cardCVV(encryptionService.decrypt(bankCardEntity.getCardCVV()))
                 .balance(bankCardEntity.getBalance().toString())
                 .cardExpiryDate(bankCardEntity.getCardExpiryDate())
-                .cardName(bankCardEntity.getCardName())
-                .last4Digits(bankCardFullData.getLast4Digits())
+                .cardCVV(encryptionService.decrypt(bankCardEntity.getCardCVV()))
                 .build();
     }
 
@@ -141,6 +130,12 @@ public class BankCardServiceImpl implements BankCardService {
             bonuses = bonuses.add(bankcard.getBonuses());
         }
         return bonuses;
+    }
+
+    private BankCardEntity getBankCardEntity(List<BankCardEntity> bankCardEntities, String cardName) {
+        return bankCardEntities.stream()
+                .filter(bankCard -> bankCard.getCardName().equalsIgnoreCase(cardName))
+                .findFirst().orElseThrow(() -> new ApiException("No bank card found"));
     }
 
     private UserEntity getUser(UserDto user) {

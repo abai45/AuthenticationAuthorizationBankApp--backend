@@ -48,8 +48,8 @@ public class TransactionResource {
 
     @PostMapping("/delete")
     @PreAuthorize("hasAnyAuthority('transaction:delete') or hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public ResponseEntity<Response> deleteTransaction(@AuthenticationPrincipal UserDto user, @RequestBody TransactionId transactionId, HttpServletRequest request) {
-        transactionService.deleteTransaction(transactionId.getTransactionId());
+    public ResponseEntity<Response> deleteTransaction(@AuthenticationPrincipal UserDto user, @RequestParam("transaction") String transactionId, HttpServletRequest request) {
+        transactionService.deleteTransaction(transactionId);
         return ResponseEntity.ok(getResponse(request, emptyMap(),"Transaction deleted successfully", OK));
     }
 

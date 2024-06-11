@@ -71,11 +71,10 @@ public class BankCardServiceImpl implements BankCardService {
     }
 
     @Override
-    public void setLimitToCard(UserDto user, String cardName, String limit) {
+    public void setLimitToCard(UserDto user, String cardName, BigDecimal limit) {
         var userEntity = getUser(user);
-        var newLimit = new BigDecimal(limit);
         var bankCardEntity = getBankCardEntity(userEntity.getBankCards(), cardName);
-        bankCardEntity.setTransactionLimit(newLimit);
+        bankCardEntity.setTransactionLimit(limit);
         bankCardRepository.save(bankCardEntity);
     }
 
@@ -91,6 +90,7 @@ public class BankCardServiceImpl implements BankCardService {
                         .last4Digits(card.getLast4Digits())
                         .cardHolderName(card.getCardHolderName())
                         .balance(card.getBalance().toString())
+                        .bankCardNumber(encryptionService.decrypt(card.getCardNumber()))
                         .cardExpiryDate(card.getCardExpiryDate())
                         .build()
                 ).collect(Collectors.toList());

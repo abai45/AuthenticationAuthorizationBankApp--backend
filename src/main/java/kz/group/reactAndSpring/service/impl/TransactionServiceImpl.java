@@ -41,49 +41,49 @@ public class TransactionServiceImpl implements TransactionService {
     private final EncryptionService encryptionService;
 
     @Override
-    public TransactionDto transferTransaction(String sourcePhone, String destPhone, String amount) {
+    public TransactionDto transferTransaction(String sourcePhone, String destPhone, BigDecimal amount) {
         var sourceCard = getBankEntityByPhoneNumber(sourcePhone);
-        var destCard = getBankEntityByPhoneNumber(sourcePhone);
-        var userAmount = new BigDecimal(amount);
-        checkBalanceForTransaction(sourceCard, userAmount);
-        sourceCard.setBalance(sourceCard.getBalance().subtract(userAmount));
-        destCard.setBalance(sourceCard.getBalance().add(userAmount));
+        var destCard = getBankEntityByPhoneNumber(destPhone);
+        if (sourceCard.equals(destCard)) {
+            throw new ApiException("Source and dest card are the same");
+        }
+        checkBalanceForTransaction(sourceCard, amount);
+        sourceCard.setBalance(sourceCard.getBalance().subtract(amount));
+        destCard.setBalance(destCard.getBalance().add(amount));
         bankCardRepository.save(sourceCard);
         bankCardRepository.save(destCard);
-        var transaction = createTransferTransaction(sourceCard, destCard, userAmount, COMPLETED);
+        var transaction = createTransferTransaction(sourceCard, destCard, amount, COMPLETED);
         transactionRepository.save(transaction);
         return convertToDto(transaction);
     }
 
     @Override
-    public TransactionDto debitTransaction(String phoneNumber, String amount) {
+    public TransactionDto debitTransaction(String phoneNumber, BigDecimal amount) {
         var bankEntity = getBankEntityByPhoneNumber(phoneNumber);
-        var userAmount = new BigDecimal(amount);
-        checkCardTransactionLimit(bankEntity, userAmount);
-        checkBalanceForTransaction(bankEntity, userAmount);
+        checkCardTransactionLimit(bankEntity, amount);
+        checkBalanceForTransaction(bankEntity, amount);
         var bonuses = BigDecimal.ZERO;
         if (bankEntity.getCardName().equals(BankType.PREMIUM.getValue())) {
-            bonuses = userAmount.multiply(BigDecimal.valueOf(0.10));
+            bonuses = amount.multiply(BigDecimal.valueOf(0.10));
         } else {
-            bonuses = userAmount.multiply(BigDecimal.valueOf(0.05));
+            bonuses = amount.multiply(BigDecimal.valueOf(0.05));
         }
-        bankEntity.setBalance(bankEntity.getBalance().subtract(userAmount));
-        bankEntity.setTransactionLimit(bankEntity.getTransactionLimit().subtract(userAmount));
+        bankEntity.setBalance(bankEntity.getBalance().subtract(amount));
+        bankEntity.setTransactionLimit(bankEntity.getTransactionLimit().subtract(amount));
         bankEntity.setBalance(bankEntity.getBalance().add(bonuses));
         bankEntity.setBonuses(bankEntity.getBalance().add(bonuses));
         bankCardRepository.save(bankEntity);
-        var transaction = createCreditDebitTransaction(bankEntity, DEBIT, userAmount, COMPLETED);
+        var transaction = createCreditDebitTransaction(bankEntity, DEBIT, amount, COMPLETED);
         transactionRepository.save(transaction);
         return convertToDto(transaction);
     }
 
     @Override
-    public TransactionDto creditTransfer(String phoneNumber, String amount) {
+    public TransactionDto creditTransfer(String phoneNumber, BigDecimal amount) {
         var bankEntity = getBankEntityByPhoneNumber(phoneNumber);
-        var userAmount = new BigDecimal(amount);
-        bankEntity.setBalance(bankEntity.getBalance().add(userAmount));
+        bankEntity.setBalance(bankEntity.getBalance().add(amount));
         bankCardRepository.save(bankEntity);
-        var transaction = createCreditDebitTransaction(bankEntity, CREDIT, userAmount, COMPLETED);
+        var transaction = createCreditDebitTransaction(bankEntity, CREDIT, amount, COMPLETED);
         transactionRepository.save(transaction);
         return convertToDto(transaction);
     }

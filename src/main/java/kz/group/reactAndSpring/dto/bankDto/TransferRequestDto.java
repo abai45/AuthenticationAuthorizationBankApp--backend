@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -14,5 +16,5 @@ public class TransferRequestDto {
     @NotEmpty(message = "Destination card number cannot be empty or null")
     private String destCardNumber;
     @NotEmpty(message = "Amount cannot be empty or null")
-    private String amount;
+    private BigDecimal amount;
 }

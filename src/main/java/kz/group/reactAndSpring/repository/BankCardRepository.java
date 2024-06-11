@@ -12,6 +12,5 @@ import java.util.Optional;
 public interface BankCardRepository extends JpaRepository<BankCardEntity, Long> {
     List<BankCardEntity> findAllByOwner(UserEntity owner);
     Optional<BankCardEntity> findByCardNumber(String cardNumber);
-    List<BankCardEntity> deleteAllByOwner(UserEntity owner);
     List<BankCardEntity> findAllByCardName(String cardName);
 }

@@ -37,7 +37,6 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 @RestControllerAdvice
 @RequiredArgsConstructor
 @Slf4j
-
 public class HandleException extends ResponseEntityExceptionHandler implements ErrorController {
     private final HttpServletRequest request;
 

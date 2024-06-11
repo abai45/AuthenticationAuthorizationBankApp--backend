@@ -1,5 +1,6 @@
 package kz.group.reactAndSpring;
 
+import jakarta.transaction.Transactional;
 import kz.group.reactAndSpring.domain.RequestContext;
 import kz.group.reactAndSpring.entity.RoleEntity;
 import kz.group.reactAndSpring.enumeration.AuthorityEnum;
@@ -21,22 +22,24 @@ public class Application {
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
-
 	@Bean
+	@Transactional
 	CommandLineRunner commandLineRunner(RoleRepository roleRepository) {
 		return args -> {
-//			RequestContext.setUserId(0L);
-//			var userRole = new RoleEntity();
-//			userRole.setName(AuthorityEnum.USER.name());
-//			userRole.setAuthorities(AuthorityEnum.USER);
-//			roleRepository.save(userRole);
-//
-//			var adminRole = new RoleEntity();
-//			adminRole.setName(AuthorityEnum.ADMIN.name());
-//			adminRole.setAuthorities(AuthorityEnum.ADMIN);
-//			roleRepository.save(adminRole);
-//			RequestContext.start();
+			RequestContext.setUserId(0L);
+			if (roleRepository.findByNameIgnoreCase(AuthorityEnum.USER.name()).isEmpty()) {
+				var userRole = new RoleEntity();
+				userRole.setName(AuthorityEnum.USER.name());
+				userRole.setAuthorities(AuthorityEnum.USER);
+				roleRepository.save(userRole);
+			}
+			if (roleRepository.findByNameIgnoreCase(AuthorityEnum.ADMIN.name()).isEmpty()) {
+				var adminRole = new RoleEntity();
+				adminRole.setName(AuthorityEnum.ADMIN.name());
+				adminRole.setAuthorities(AuthorityEnum.ADMIN);
+				roleRepository.save(adminRole);
+			}
+			RequestContext.start();
 		};
 	}
-
 }

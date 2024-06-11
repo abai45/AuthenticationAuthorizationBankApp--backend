@@ -47,6 +47,7 @@ public class BankCardUtils {
 
     public static BankCardDto fromBankCardEntity(BankCardEntity bankCard) {
         BankCardDto bankCardDto = new BankCardDto();
+        bankCardDto.setBankCardNumber(encryptionService.decrypt(bankCard.getCardNumber()));
         bankCardDto.setLast4Digits(bankCard.getLast4Digits());
         bankCardDto.setCardHolderName(bankCard.getCardHolderName());
         bankCardDto.setCardName(bankCard.getCardName());

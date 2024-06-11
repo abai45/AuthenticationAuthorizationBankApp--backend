@@ -9,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 public class BankCardDto {
     private String last4Digits;
+    private String bankCardNumber;
     private String cardHolderName;
     private String balance;
     private String cardName;

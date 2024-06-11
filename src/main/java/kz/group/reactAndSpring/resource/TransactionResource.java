@@ -3,7 +3,6 @@ package kz.group.reactAndSpring.resource;
 import jakarta.servlet.http.HttpServletRequest;
 import kz.group.reactAndSpring.domain.Response;
 import kz.group.reactAndSpring.dto.bankDto.CreditDebitRequestDto;
-import kz.group.reactAndSpring.dto.bankDto.TransactionId;
 import kz.group.reactAndSpring.dto.bankDto.TransferRequestDto;
 import kz.group.reactAndSpring.dto.UserDto;
 import kz.group.reactAndSpring.service.TransactionService;

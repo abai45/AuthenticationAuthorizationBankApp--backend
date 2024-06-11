@@ -14,5 +14,5 @@ public interface BankCardService {
     BigDecimal getTotalBalance(UserDto userId);
     BigDecimal getBonuses(UserDto user);
     void deleteBankCard(UserDto user, String cardName);
-    void setLimitToCard(UserDto user, String cardName, String limit);
+    void setLimitToCard(UserDto user, String cardName, BigDecimal limit);
 }

@@ -15,6 +15,8 @@ import java.util.Base64;
 @Slf4j
 public class EncryptionServiceImpl implements EncryptionService {
     private static final String ALGORITHM = "AES";
+    private static final String TRANSFORMATION = "AES/GCM/NoPadding";
+    private static final int KEY_SIZE = 256;
     private static final byte[] KEY = "1234567890123456".getBytes();
 
     @Override

@@ -49,13 +49,13 @@ git clone https://github.com/abai45/AuthenticationAuthorizationBankApp--backend.
 cd AuthenticationAuthorizationBankApp--backend
 ```
 
-3. Создайте новую базу данных reactbankapp
+3. Создайте новую базу данных **reactbankapp**
 
 ```plaintext
 spring.datasource.url=jdbc:postgresql://localhost:5432/reactbankapp
 ```
 
-4. Отредактируйте данные под свои в файле application-dev.properties:
+4. Отредактируйте данные под свои в файле **application-dev.properties**:
 
 ```bash
 #Database
@@ -82,3 +82,6 @@ mvn spring-boot:run
 ## Frontend приложения
 
 **Ссылка на гитхаб с фронтендом**: https://github.com/Munkhadilio/ReactNative-VaBank/commits/main/
+
+## Демонстрация проекта
+https://www.youtube.com/watch?v=xHITIJl3h2k&ab_channel=AbayAmangeldiuly
